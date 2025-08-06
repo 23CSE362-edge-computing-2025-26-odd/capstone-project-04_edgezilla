@@ -1,0 +1,114 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36" version="28.0.7">
+  <diagram name="Page-1" id="V6R9hM_ueMyfMaKfH4C2">
+    <mxGraphModel dx="1733" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=classicThin;startFill=1;" edge="1" parent="1" source="vu8GZ5g0eEWh89rgobDa-1" target="vu8GZ5g0eEWh89rgobDa-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="173.75" y="560" width="530" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="vu8GZ5g0eEWh89rgobDa-2" target="vu8GZ5g0eEWh89rgobDa-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="vu8GZ5g0eEWh89rgobDa-2" target="vu8GZ5g0eEWh89rgobDa-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="vu8GZ5g0eEWh89rgobDa-2" target="vu8GZ5g0eEWh89rgobDa-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-2" value="Wearable" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="378.74" y="600" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-3" value="HR + SpO2 Sensor" style="whiteSpace=wrap;html=1;rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="218.74" y="710" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-6" value="Accelerometer " style="whiteSpace=wrap;html=1;rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="378.74" y="710" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-8" value="Temp Sensor" style="whiteSpace=wrap;html=1;rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="538.74" y="710" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-10" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Patient Sensing Layer&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="361.87" y="570" width="153.75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-26" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;WiFi&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="443.75" y="490" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-31" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="198.75" y="40" width="480" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-32" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Cloud Layer&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="396.25" y="40" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-34" value="ML Inference - Offloaded Task" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="448.75" y="70" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-35" value="Data Analytics &amp;amp; Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="218.75" y="70" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-36" value="Edge-Device Monitoring" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="218.75" y="120" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-37" value="Global Resource Allocation Algo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="448.75" y="120" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="vu8GZ5g0eEWh89rgobDa-13" target="vu8GZ5g0eEWh89rgobDa-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-39" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Ethernet / WiFi&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="450" y="200" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-41" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Patient Data&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="345" y="490" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-13" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="173.75" y="250" width="530" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-14" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Edge Node&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="386.24" y="260" width="105" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-15" value="ML Inference - Sepsis Detection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="453.75" y="290" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-16" value="Data Pre-processing &amp;amp; Buffering" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="215" y="290" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-17" value="End-Device Monitoring" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="215" y="340" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;startArrow=classicThin;startFill=1;" edge="1" parent="1" source="vu8GZ5g0eEWh89rgobDa-18" target="vu8GZ5g0eEWh89rgobDa-31">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="355" />
+              <mxPoint x="720" y="130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-18" value="Local Resource Allocation Algo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="453.75" y="340" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-19" value="Local Rule-Based Alert System" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="215" y="390" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-20" value="Communication Manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="453.75" y="390" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-43" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Q-Vector Sharing&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="730" y="210" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-44" value="Model Repository" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="741.25" y="65" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-45" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="vu8GZ5g0eEWh89rgobDa-31" target="vu8GZ5g0eEWh89rgobDa-44">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vu8GZ5g0eEWh89rgobDa-46" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Patient Data / Offload Request&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="316" y="200" width="108.75" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
