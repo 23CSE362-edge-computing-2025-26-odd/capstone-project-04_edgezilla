@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.9 Chrome/134.0.6998.205 Electron/35.4.0 Safari/537.36" version="27.0.9">
   <diagram name="Page-1" id="V6R9hM_ueMyfMaKfH4C2">
-    <mxGraphModel dx="1148" dy="884" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1627" dy="1252" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -11,7 +11,7 @@
           <mxGeometry x="1270" y="310" width="730" height="470" as="geometry" />
         </mxCell>
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-75" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;" vertex="1" parent="1">
-          <mxGeometry x="1680" y="390" width="281.24" height="250" as="geometry" />
+          <mxGeometry x="1680" y="372.5" width="281.24" height="290" as="geometry" />
         </mxCell>
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-111" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="fO-IDmy-YJtHvZAQnEMu-69" target="fO-IDmy-YJtHvZAQnEMu-41">
           <mxGeometry relative="1" as="geometry">
@@ -160,13 +160,13 @@
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-120" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="fO-IDmy-YJtHvZAQnEMu-38" target="fO-IDmy-YJtHvZAQnEMu-2">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="2110" y="455" />
+              <mxPoint x="2110" y="447" />
               <mxPoint x="2110" y="130" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-38" value="End-Device Monitoring Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="1714.0500000000002" y="440" width="211.87" height="30" as="geometry" />
+          <mxGeometry x="1712.8600000000001" y="432" width="211.87" height="30" as="geometry" />
         </mxCell>
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-60" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="fO-IDmy-YJtHvZAQnEMu-39" target="fO-IDmy-YJtHvZAQnEMu-59">
           <mxGeometry relative="1" as="geometry" />
@@ -202,7 +202,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-59" value="Calculated Q-Vectors" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="1727.2299999999998" y="692" width="185" height="25" as="geometry" />
+          <mxGeometry x="1727.4899999999998" y="705" width="185" height="25" as="geometry" />
         </mxCell>
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-55" value="Data Buffer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fad7ac;strokeColor=#b46504;" vertex="1" parent="1">
           <mxGeometry x="1391.24" y="440" width="120" height="30" as="geometry" />
@@ -222,7 +222,7 @@
           <mxGeometry x="1455" y="700" width="128.75" height="30" as="geometry" />
         </mxCell>
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-79" value="Control/Feedback Layer" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="1749.1000000000001" y="400" width="141.25" height="30" as="geometry" />
+          <mxGeometry x="1745.6100000000001" y="392.5" width="141.25" height="30" as="geometry" />
         </mxCell>
         <mxCell id="fO-IDmy-YJtHvZAQnEMu-83" value="Raw Patient Data" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="1498.75" y="250" width="97.49" height="30" as="geometry" />
