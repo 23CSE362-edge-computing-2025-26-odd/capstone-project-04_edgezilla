@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.9 Chrome/134.0.6998.205 Electron/35.4.0 Safari/537.36" version="27.0.9">
   <diagram name="Page-1" id="V6R9hM_ueMyfMaKfH4C2">
-    <mxGraphModel dx="751" dy="578" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1301" dy="1001" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -510,6 +510,12 @@
         </mxCell>
         <mxCell id="8AGxM7mbzP-wv0h-hB67-31" value="&lt;b&gt;Architecture Diagram&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="373.75" y="857.5" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="8AGxM7mbzP-wv0h-hB67-32" value="&lt;b&gt;Data Flow Diagram&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1584.49" y="1070" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="8AGxM7mbzP-wv0h-hB67-33" value="&lt;b&gt;Workflow Diagram&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="3030" y="870" width="130" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
