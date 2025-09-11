@@ -50,6 +50,17 @@ def print_edge_result(latency, cpu, queue, base_reward, loss):
     print(f"  - Sepsis Reward : {base_reward:.2f}")
     print(f"  - Stored & Trained (Loss: {loss:.4f})\n")
 
+def print_cloud_update(data):
+    strategy = data['allocation_strategy']['priority']
+    reward = data['cloud_reward']
+    dist_rewards = data['distributed_rewards']
+    print(f"CLOUD SIM: Aggregated Q-vectors from {len(EDGE_IDS)} edges.")
+    print(f"  - Cloud Decision : New resource strategy is '{strategy.upper()}'")
+    print(f"  - Global Reward  : Calculated {reward:.3f} based on system health.")
+    print(f"  - Distributing Rewards to Edges:")
+    for edge_id, r in dist_rewards.items():
+        print(f"    - {edge_id}: {r:.3f}")
+
 if __name__ == "__main__":
     edge_cpu_loads = {edge_id: random.uniform(0.2, 0.5) for edge_id in EDGE_IDS}
     edge_contributions = {edge_id: 0 for edge_id in EDGE_IDS}
@@ -99,6 +110,38 @@ if __name__ == "__main__":
 
             except requests.exceptions.RequestException as e:
                 print(f"\n[ERROR] Could not connect to Edge server at {EDGE_URL}. Is it running?")
+                print(f"  Details: {e}")
+                exit()
+        
+        if step % CLOUD_AGGREGATION_INTERVAL == 0:
+            print_header(f"CLOUD COORDINATION @ STEP {step}")
+            try:
+                res = requests.post(f"{EDGE_URL}/get_q_vectors", json={'edge_ids': EDGE_IDS})
+                res.raise_for_status()
+                edge_q_vectors = res.json()['q_vectors']
+
+                system_metrics = {
+                    'cpu_util': random.uniform(0.6, 0.9), 'memory_util': random.uniform(0.5, 0.8),
+                    'queue_length': random.randint(5, 20), 'throughput': random.uniform(50, 100),
+                    'fairness_index': random.uniform(0.8, 0.98),
+                    'edge_contributions': edge_contributions
+                }
+
+                payload = {'edge_q_vectors': edge_q_vectors, 'system_metrics': system_metrics}
+                res = requests.post(f"{CLOUD_URL}/aggregate_and_allocate", json=payload)
+                res.raise_for_status()
+                cloud_data = res.json()
+                print_cloud_update(cloud_data)
+                
+                for edge_id, global_reward in cloud_data['distributed_rewards'].items():
+                    requests.post(f"{EDGE_URL}/set_global_reward", json={'edge_id': edge_id, 'global_reward': global_reward})
+
+                edge_contributions = {edge_id: 0 for edge_id in EDGE_IDS}
+                
+                time.sleep(1)
+
+            except requests.exceptions.RequestException as e:
+                print(f"\n[ERROR] Could not connect to a server during cloud update. Are both servers running?")
                 print(f"  Details: {e}")
                 exit()
 
