@@ -1,9 +1,12 @@
+import flask
+from flask import request, jsonify
 import numpy as np
 import torch
 import torch.nn as nn
 from collections import deque
 import random
 import copy
+import threading
 
 class CloudDQNAgent:
     def __init__(self, state_dim, action_dim, replay_size=20000, batch_size=128, gamma=0.99, lr=0.0005):
@@ -108,3 +111,54 @@ class CloudDQNAgent:
             self.target_net.load_state_dict(self.q_net.state_dict())
             
         return loss.item()
+
+app = flask.Flask(__name__)
+agent = CloudDQNAgent(state_dim=9, action_dim=4)
+cloud_state_history = deque(maxlen=2)
+
+@app.route('/aggregate_and_allocate', methods=['POST'])
+def aggregate_and_allocate():
+    data = request.json
+    edge_q_vectors = data.get('edge_q_vectors', {})
+    system_metrics = data.get('system_metrics', {})
+    
+    aggregated_q = agent.aggregate_q_vectors(edge_q_vectors)
+    cloud_metrics = np.array([
+        system_metrics.get('cpu_util', 0.0),
+        system_metrics.get('memory_util', 0.0),
+        system_metrics.get('queue_length', 0.0)
+    ])
+    current_cloud_state = np.concatenate([aggregated_q, cloud_metrics])
+    
+    action = agent.make_resource_allocation_decision(current_cloud_state)
+    allocation_strategy = agent.map_action_to_allocation(action)
+    cloud_reward = agent.calculate_cloud_reward(
+        system_metrics.get('cpu_util', 0.0), system_metrics.get('memory_util', 0.0),
+        system_metrics.get('queue_length', 0.0), system_metrics.get('throughput', 0.0),
+        system_metrics.get('fairness_index', 0.0)
+    )
+    
+    if len(cloud_state_history) > 0:
+        prev_cloud_state = cloud_state_history[0]
+        agent.store_and_update(prev_cloud_state, action, cloud_reward, current_cloud_state, False)
+    
+    cloud_state_history.append(current_cloud_state)
+    
+    distributed_rewards = agent.distribute_reward_to_edges(
+        cloud_reward, system_metrics.get('edge_contributions', {})
+    )
+    
+    return jsonify({
+        'allocation_strategy': allocation_strategy,
+        'cloud_reward': cloud_reward,
+        'distributed_rewards': distributed_rewards,
+        'cloud_epsilon': agent.epsilon
+    })
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy', 'server': 'cloud_dqn'})
+
+if __name__ == '__main__':
+    print("Starting Cloud DQN Server on port 5001...")
+    app.run(host='0.0.0.0', port=5001, debug=False)
