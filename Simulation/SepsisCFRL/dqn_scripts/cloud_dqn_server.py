@@ -25,6 +25,60 @@ class CloudDQNAgent:
         self.epsilon_decay = 0.999
         self.update_counter = 0
 
+    def aggregate_q_vectors(self, edge_q_vectors):
+        if not edge_q_vectors:
+            return np.zeros(6)
+        
+        all_q_values = []
+        for edge_id in sorted(edge_q_vectors.keys()):
+            all_q_values.extend(edge_q_vectors[edge_id])
+        
+        aggregated = all_q_values[:6]
+        while len(aggregated) < 6:
+            aggregated.append(0.0)
+            
+        return np.array(aggregated)
+
+    def make_resource_allocation_decision(self, state):
+        if random.random() < self.epsilon:
+            action = random.randint(0, self.action_dim - 1)
+        else:
+            state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+            with torch.no_grad():
+                q_values = self.q_net(state_tensor)
+                action = q_values.argmax().item()
+        return action
+
+    def map_action_to_allocation(self, action):
+        strategies = {
+            0: {"priority": "balanced", "cpu_cores": 4, "memory_gb": 8},
+            1: {"priority": "cpu_intensive", "cpu_cores": 8, "memory_gb": 4},
+            2: {"priority": "memory_intensive", "cpu_cores": 2, "memory_gb": 16},
+            3: {"priority": "high_performance", "cpu_cores": 8, "memory_gb": 16}
+        }
+        return strategies.get(action, strategies[0])
+
+    def calculate_cloud_reward(self, cpu, mem, queue, throughput, fairness):
+        reward = throughput * 2.0 + fairness * 20.0
+        reward -= abs(cpu - 0.75) * 15
+        reward -= abs(mem - 0.7) * 10
+        reward -= queue * 1.0
+        if 0.5 < cpu < 0.9 and 0.4 < mem < 0.8:
+            reward += 5.0
+        return reward
+
+    def distribute_reward_to_edges(self, total_reward, contributions):
+        if not contributions: return {}
+        total_contrib = sum(contributions.values())
+        if total_contrib == 0:
+            share = total_reward / len(contributions)
+            return {edge_id: share for edge_id in contributions}
+        
+        return {
+            edge_id: total_reward * (contrib / total_contrib)
+            for edge_id, contrib in contributions.items()
+        }
+        
     def store_and_update(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
         if len(self.memory) < self.batch_size:
