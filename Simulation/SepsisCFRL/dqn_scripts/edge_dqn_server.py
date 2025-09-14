@@ -14,7 +14,7 @@ class DQNAgent:
     """
     A Deep Q-Network Agent for making offloading decisions at the edge.
     """
-    def _init_(self, state_dim, action_dim, replay_size=10000, batch_size=64, gamma=0.99, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, lr=0.001):
+    def __init__(self, state_dim, action_dim, replay_size=10000, batch_size=64, gamma=0.99, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, lr=0.001):
         self.state_dim = state_dim
         self.action_dim = action_dim
         # Q-Network for action-value prediction
@@ -49,13 +49,9 @@ class DQNAgent:
 
     def calculate_local_reward(self, latency, cpu_util, queue_length, action):
         """Calculates a reward based on local performance metrics."""
-        # Penalty for high latency
         latency_reward = -latency / 10.0
-        # Penalty for deviating from ideal CPU utilization (e.g., 70%)
         cpu_penalty = -abs(cpu_util - 0.7) * 10
-        # Penalty for long task queues
         queue_penalty = -queue_length * 0.5
-        # Action-specific reward/penalty
         action_reward = 0.0
         if action == 0:  # Edge processing
             action_reward = 5.0 if cpu_util < 0.8 else -2.0
@@ -97,10 +93,8 @@ class DQNAgent:
         loss.backward()
         self.optimizer.step()
         
-        # Decay epsilon to reduce exploration over time
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
         
-        # Periodically update the target network
         self.update_counter += 1
         if self.update_counter % 50 == 0:
             self.target_net.load_state_dict(self.q_net.state_dict())
@@ -123,7 +117,7 @@ class DQNAgent:
             'recent_q_vectors': list(self.q_vector_history)[-5:] if self.q_vector_history else []
         }
 
-app = flask.Flask(_name_)
+app = flask.Flask(__name__)
 agents = {}
 agent_lock = threading.Lock()
 
@@ -132,7 +126,6 @@ def get_agent(edge_id):
     with agent_lock:
         if edge_id not in agents:
             print(f"Creating new agent for edge_id: {edge_id}")
-            # State: [HeartRate, Temp, BP, RespRate, O2Sat, Glucose]
             agents[edge_id] = DQNAgent(state_dim=6, action_dim=2)
         return agents[edge_id]
 
@@ -177,6 +170,6 @@ def get_q_vectors_route():
 def health_check():
     return jsonify({'status': 'healthy', 'active_agents': len(agents), 'server': 'edge_dqn'})
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     print("Starting Edge DQN Server on port 5000...")
     app.run(host='0.0.0.0', port=5000, debug=False)
