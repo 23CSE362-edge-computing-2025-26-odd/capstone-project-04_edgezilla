@@ -1,38 +1,43 @@
-# Scenario 4: Full Occupancy – 100% Wards Filled
+# Scenario 4: Emergency Surge (Sudden Patient Spike)
 
-## Scenario Description
-All wards are occupied. Edge nodes are fully loaded, and heavy reliance on cloud servers is required for real-time processing.
+## Description
+This scenario models an unexpected emergency where patient inflow spikes rapidly. New wearables are connected, drastically increasing data traffic in a short time. Edge servers are stressed beyond normal capacity.
 
----
+## Resource Specifications
 
-## Specifications
+### Wearables
+- CPU Cores: 1  
+- MIPS: ~500  
+- RAM: 256 MB  
+- Bandwidth: 0.2–0.6 Mbps per device  
+- Task Capacity: ~2 tasks/sec  
 
-### Wearable Devices
-- 10 Raspberry Pi Zero W units per ward
-- Each handles ~2 patient streams
+### Edge Layer
+- CPU Cores: 4–6  
+- MIPS: ~2500 per core  
+- RAM: 4–6 GB  
+- Bandwidth: 50–100 Mbps  
+- Task Capacity: ~60 tasks/sec per core (burst mode)  
 
-### Edge Nodes
-- 6 Raspberry Pi 4 nodes
-- CPU: 4 Cores, 1.5 GHz
-- RAM: 4 GB
-- Tasks: ~35 preprocessing tasks per node
+### Cloud Layer
+- CPU Cores: 20+  
+- MIPS: ~12000 per core  
+- RAM: 128 GB  
+- Bandwidth: 2 Gbps+  
+- Task Capacity: Rapid scaling under surge  
 
-### Cloud Node
-- CPU: 16 Cores, 2.5 GHz
-- RAM: 64 GB
-- Tasks: ~200 ML inference tasks concurrently
+## Baseline Comparison
+- Edge queues overflow quickly.  
+- Cloud absorbs excess load but increases latency.  
+- Need for adaptive scheduling and dynamic offloading.  
 
----
+## Evaluation Metrics
+- Task failure rate under surge.  
+- Average latency during peak.  
+- Bandwidth spikes observed.  
+- Cloud vs edge scaling efficiency.  
 
-## Expected Performance Metrics
-| Metric                  | Value             |
-|-------------------------|-----------------|
-| Latency (ms)            | 220              |
-| Throughput (tasks/sec)  | 150              |
-| CPU Utilization (Edge)  | 85%              |
-| CPU Utilization (Cloud) | 60%              |
-| Energy Consumption (W)  | 28               |
-
----
-
-**Observation**: Full occupancy scenario stresses both edge and cloud resources, highlighting the importance of efficient task scheduling and load balancing.
+## Visualization Plan
+- Line graph: Surge vs latency.  
+- Bar chart: Failed vs completed tasks.  
+- Heatmap: Bandwidth utilization over time.  
