@@ -1,0 +1,59 @@
+{
+  "Best Threshold (GA)": 0.9974774760565208,
+  "Accuracy": 0.934681878122845,
+  "Precision": 0.05561230280331404,
+  "Recall": 0.1651499831479609,
+  "F1 Score": 0.08320597724571234,
+  "ROC AUC": 0.6789845172810749,
+  "Confusion Matrix": [
+    [
+      154026,
+      8321
+    ],
+    [
+      2477,
+      490
+    ]
+  ],
+  "Classification Report": {
+    "0.0": {
+      "precision": 0.984172827357942,
+      "recall": 0.9487455881537694,
+      "f1-score": 0.9661345460247766,
+      "support": 162347.0
+    },
+    "1.0": {
+      "precision": 0.05561230280331404,
+      "recall": 0.1651499831479609,
+      "f1-score": 0.08320597724571234,
+      "support": 2967.0
+    },
+    "accuracy": 0.934681878122845,
+    "macro avg": {
+      "precision": 0.519892565080628,
+      "recall": 0.5569477856508651,
+      "f1-score": 0.5246702616352444,
+      "support": 165314.0
+    },
+    "weighted avg": {
+      "precision": 0.9675073357700936,
+      "recall": 0.934681878122845,
+      "f1-score": 0.9502880414119338,
+      "support": 165314.0
+    }
+  },
+  "GA_Metadata": {
+    "population_size": 30,
+    "generations": 20,
+    "Hyperparameters": {
+      "hidden_dim": 256,
+      "num_layers": 2,
+      "dropout": 0.5,
+      "lr": 0.001,
+      "best_generation": 2,
+      "best_auc": 0.7400065152268177,
+      "population_size": 10,
+      "generations": 5
+    }
+  }
+}

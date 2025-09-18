@@ -1,0 +1,26 @@
+======================================================================
+ Genetic Algorithm Hyperparameter Optimization (GA_Optimize_Sepsis_Fast) 
+======================================================================
+[INFO] Population Size = 10, Generations = 5
+[INFO] Dataset loaded: (1552210, 11) rows, 40336 patients
+[INFO] Train: 32268, Validation: 8068
+[INFO] Using computation device: cuda
+[GA] Starting Fast GA optimization...
+
+[GA] --- Generation 1 ---
+[GA] Best individual (Gen 1): [256, 2, 0.5, 0.001], AUC=0.7316
+
+[GA] --- Generation 2 ---
+[GA] Best individual (Gen 2): [256, 2, 0.5, 0.001], AUC=0.7400
+
+[GA] --- Generation 3 ---
+[GA] Best individual (Gen 3): [64, 2, 0.5, 0.001], AUC=0.7316
+
+[GA] --- Generation 4 ---
+[GA] Best individual (Gen 4): [64, 3, 0.3, 0.001], AUC=0.7343
+
+[GA] --- Generation 5 ---
+[GA] Best individual (Gen 5): [128, 2, 0.5, 0.001], AUC=0.7295
+
+[RESULT] Best hyperparameters from Gen 2: [256, 2, 0.5, 0.001], AUC=0.7400
+[INFO] Saved best hyperparameters to GA_Optimize_Sepsis_Fast_BestHyperparams.json
