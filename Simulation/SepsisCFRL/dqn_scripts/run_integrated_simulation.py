@@ -49,11 +49,14 @@ def run_java_simulation():
     
     try:
         # Compile Java classes
-        print("Compiling Java classes...")
+        print("Compiling all Java source files...")
         compile_cmd = [
-            "javac", "-cp", ".:bin:src:lib/*:lib/commons-math3-3.5/*", 
+            "javac", "-cp", ".:bin:src:lib/*:lib/commons-math3-3.5/*",
             "-d", "bin",
-            "src/org/fog/test/sepsisdetection/SepsisDetection.java"
+            "src/org/fog/test/sepsisdetection/SepsisDetection.java",
+            "src/org/fog/utils/SepsisStatistics.java",
+            "src/org/fog/application/DQNOffloadDecisionModule.java",
+            "src/org/fog/application/DynamicDQNSelectivity.java"
         ]
         
         compile_result = subprocess.run(
