@@ -31,3 +31,5 @@ results/
 /Simulation/SepsisCFRL/src/org/fog/test/tutorial/**/*
 
 !/Simulation/SepsisCFRL/src/org/fog/test/sepsisdetection/**
+
+__pycache__
