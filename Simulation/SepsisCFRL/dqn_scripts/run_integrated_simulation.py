@@ -89,7 +89,7 @@ def run_java_simulation():
         )
         
         try:
-            stdout, stderr = simulation_process.communicate(timeout=180)  # 3 minute timeout
+            stdout, stderr = simulation_process.communicate(timeout=120)  # Reduced from 180 to 120 seconds
             
             print("\n--- SIMULATION OUTPUT ---")
             print(stdout)

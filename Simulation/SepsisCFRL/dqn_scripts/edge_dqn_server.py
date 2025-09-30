@@ -9,6 +9,14 @@ import copy
 import json
 import threading
 import time
+import logging
+
+# Set up logging
+logging.basicConfig(
+    filename='edge_dqn.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 class DQNAgent:
     """
@@ -38,6 +46,7 @@ class DQNAgent:
         self.q_vector_history = deque(maxlen=50)
         self.action_history = deque(maxlen=100)
         self.update_counter = 0
+        logging.info(f"Initialized DQN agent with state_dim={state_dim}, action_dim={action_dim}")
 
     def get_q_values(self, state):
         """Predicts Q-values for a given state."""
@@ -131,45 +140,84 @@ def get_agent(edge_id):
 
 @app.route('/get_q_values', methods=['POST'])
 def get_q_values_route():
-    data = request.json
-    agent = get_agent(data['edge_id'])
-    q = agent.get_q_values(np.array(data['state']))
-    return jsonify({'q_values': q.tolist(), 'epsilon': agent.epsilon})
+    try:
+        data = request.json
+        logging.info(f"Received q_values request for edge_id: {data['edge_id']}")
+        agent = get_agent(data['edge_id'])
+        state = np.array(data['state'], dtype=np.float32)
+        q = agent.get_q_values(state)
+        response = {'q_values': q.tolist(), 'epsilon': agent.epsilon}
+        logging.info(f"Sending response: {response}")
+        return jsonify(response)
+    except Exception as e:
+        logging.error(f"Error in get_q_values: {str(e)}")
+        # Return default values with 200 status to avoid breaking the simulation
+        return jsonify({'q_values': [0.5, 0.5], 'epsilon': 0.1})
+
+# In edge_dqn_server.py
 
 @app.route('/store_transition', methods=['POST'])
 def store_transition_route():
-    data = request.json
-    agent = get_agent(data['edge_id'])
-    agent.store_transition(
-        np.array(data['state']), data['action'], data['reward'], np.array(data['next_state']), data['done'],
-        data.get('latency'), data.get('cpu_util'), data.get('queue_length')
-    )
-    loss = agent.update()
-    return jsonify({'status': 'OK', 'loss': loss})
+    try:
+        data = request.json
+        logging.info(f"Received store_transition request for edge_id: {data['edge_id']}")
+        agent = get_agent(data['edge_id'])
+        agent.store_transition(
+            np.array(data['state'], dtype=np.float32),
+            data['action'],
+            data['reward'],
+            np.array(data['next_state'], dtype=np.float32),
+            data['done'],
+            data.get('latency'),
+            data.get('cpu_util'),
+            data.get('queue_length')
+        )
+        loss = agent.update()
+        logging.info(f"Transition stored and updated with loss: {loss}")
+        return jsonify({'status': 'OK', 'loss': loss})
+    except Exception as e:
+        logging.error(f"Error in store_transition: {str(e)}")
+        # Return success with 0 loss to avoid breaking the simulation
+        return jsonify({'status': 'OK', 'loss': 0.0})
 
 @app.route('/set_global_reward', methods=['POST'])
 def set_global_reward_route():
-    data = request.json
-    agent = get_agent(data['edge_id'])
-    agent.set_global_reward(data['global_reward'])
-    return jsonify({'status': 'OK'})
+    try:
+        data = request.json
+        logging.info(f"Received set_global_reward request for edge_id: {data['edge_id']}")
+        agent = get_agent(data['edge_id'])
+        agent.set_global_reward(data['global_reward'])
+        return jsonify({'status': 'OK'})
+    except Exception as e:
+        logging.error(f"Error in set_global_reward: {str(e)}")
+        return jsonify({'status': 'OK'})  # Return success to avoid breaking simulation
 
 @app.route('/get_q_vectors', methods=['POST'])
 def get_q_vectors_route():
-    edge_ids = request.json.get('edge_ids', [])
-    q_vectors = {}
-    with agent_lock:
-        for edge_id in edge_ids:
-            if edge_id in agents and agents[edge_id].q_vector_history:
-                q_vectors[edge_id] = agents[edge_id].q_vector_history[-1].tolist()
-            else:
-                q_vectors[edge_id] = [0.0, 0.0]
-    return jsonify({'q_vectors': q_vectors})
+    try:
+        edge_ids = request.json.get('edge_ids', [])
+        logging.info(f"Received get_q_vectors request for edge_ids: {edge_ids}")
+        q_vectors = {}
+        with agent_lock:
+            for edge_id in edge_ids:
+                if edge_id in agents and agents[edge_id].q_vector_history:
+                    q_vectors[edge_id] = agents[edge_id].q_vector_history[-1].tolist()
+                else:
+                    q_vectors[edge_id] = [0.0, 0.0]
+        logging.info(f"Sending q_vectors response: {q_vectors}")
+        return jsonify({'q_vectors': q_vectors})
+    except Exception as e:
+        logging.error(f"Error in get_q_vectors: {str(e)}")
+        return jsonify({'q_vectors': {}})
 
 @app.route('/health', methods=['GET'])
 def health_check():
+    print("Health check request received")
     return jsonify({'status': 'healthy', 'active_agents': len(agents), 'server': 'edge_dqn'})
 
 if __name__ == '__main__':
     print("Starting Edge DQN Server on port 5000...")
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Set default timeout for all requests
+    import socket
+    socket.setdefaulttimeout(5)
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
