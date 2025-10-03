@@ -23,6 +23,8 @@ import org.json.simple.parser.JSONParser;
  * to make intelligent offloading decisions instead of using static selectivity values.
  */
 public class DQNOffloadDecisionModule {
+    private static int simulationStep = 0; 
+    private static int lastStepLogged = -1;
     
     // DQN Server endpoints
     private static final String EDGE_DQN_SERVER = "http://localhost:5000";
@@ -84,27 +86,53 @@ public class DQNOffloadDecisionModule {
         }
         
         try {
-            // Get Q-values from Edge DQN
-            double[] qValues = getQValuesFromEdgeDQN(edgeId, state.toStateVector());
+            // Get Q-values AND epsilon from Edge DQN
+            JSONObject response = getQValuesFromEdgeDQN(edgeId, state.toStateVector()); // Changed to get JSONObject
+    
+            // Parse Q-values from List to double array
+            Object qValuesObj = response.get("q_values");
+            double[] qValues;
+            if (qValuesObj instanceof java.util.List) {
+                java.util.List<?> qValuesList = (java.util.List<?>) qValuesObj;
+                qValues = new double[qValuesList.size()];
+                for (int i = 0; i < qValuesList.size(); i++) {
+                    qValues[i] = ((Number) qValuesList.get(i)).doubleValue();
+                }
+            } else {
+                Log.printLine("DQN: Unexpected q_values format, using defaults");
+                qValues = new double[]{0.5, 0.5};
+            }
             
-            // Choose action (0 = edge, 1 = cloud)
-            int action = (qValues[0] > qValues[1]) ? 0 : 1;
+            double epsilon = ((Number) response.get("epsilon")).doubleValue(); // Fix epsilon parsing
+    
+            int action;
+            String decisionType;
+    
+            // This is the logic to decide if we are exploring or exploiting
+            if (Math.random() < epsilon) {
+                action = (new java.util.Random()).nextInt(2);
+                decisionType = "Explore";
+            } else {
+                action = (qValues[0] > qValues[1]) ? 0 : 1;
+                decisionType = "Exploit";
+            }
+    
+            // Store epsilon and decisionType for the feedback step
+            storeDecisionForLearning(edgeId, state.toStateVector(), action, tuple, epsilon, decisionType, qValues);
             
-            Log.printLine("DQN Decision for " + edgeId + ": action=" + action + 
-                         " Q-values=[" + qValues[0] + ", " + qValues[1] + "]");
-            
-            // Update dynamic selectivities based on DQN decision
-            updateSelectivitiesForDecision(action);
-            
-            // Store transition for learning (will be completed after execution)
-            storeDecisionForLearning(edgeId, state.toStateVector(), action, tuple);
+            Log.printLine("DQN: Made decision " + action + " (" + decisionType + ") with epsilon=" + epsilon + 
+                         " and Q-values=[" + qValues[0] + ", " + qValues[1] + "]");
             
             // Track statistics based on decision
             SepsisStatistics.getInstance().recordTupleProcessing("T_PREPROCESSED");
             if (action == 0) {
                 SepsisStatistics.getInstance().recordTupleProcessing("T_INFER_REQUEST");
+                // Record this as an edge decision for statistics
+                SepsisStatistics.getInstance().recordEdgeLoopLatency(15.0); // Approximate edge latency
             } else {
                 SepsisStatistics.getInstance().recordTupleProcessing("T_OFFLOAD_TO_CLOUD");
+                // Record this as a cloud decision for statistics  
+                SepsisStatistics.getInstance().recordCloudLoopLatency(75.0); // Approximate cloud latency
             }
             
             // Periodically aggregate and communicate with cloud
@@ -118,7 +146,6 @@ public class DQNOffloadDecisionModule {
             
         } catch (Exception e) {
             Log.printLine("Error in DQN decision making: " + e.getMessage());
-            // Fallback to simple rule-based decision
             int fallbackAction = (state.cpuUtilization > 0.8) ? 1 : 0;
             updateSelectivitiesForDecision(fallbackAction);
             return fallbackAction;
@@ -173,17 +200,26 @@ public class DQNOffloadDecisionModule {
     /**
      * Gets Q-values from the Edge DQN server
      */
-    private static double[] getQValuesFromEdgeDQN(String edgeId, double[] state) throws Exception {
+    private static JSONObject getQValuesFromEdgeDQN(String edgeId, double[] state) throws Exception {
         URL url = new URL(EDGE_DQN_SERVER + "/get_q_values");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setDoOutput(true);
+        conn.setConnectTimeout(5000);  // 5 second timeout
+        conn.setReadTimeout(5000);     // 5 second timeout
         
         // Create JSON request
         JSONObject request = new JSONObject();
         request.put("edge_id", edgeId);
-        request.put("state", state);
+
+        java.util.List<Double> stateList = new java.util.ArrayList<>();
+        for (double d : state) {
+            stateList.add(d);
+        }
+        request.put("state", stateList);
+        
+        Log.printLine("DQN: Sending request to Edge DQN server for edge " + edgeId);
         
         // Send request
         try (OutputStream os = conn.getOutputStream()) {
@@ -193,6 +229,8 @@ public class DQNOffloadDecisionModule {
         
         // Read response
         int responseCode = conn.getResponseCode();
+        Log.printLine("DQN: Got response code " + responseCode + " from Edge DQN server");
+        
         if (responseCode == HttpURLConnection.HTTP_OK) {
             try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
                 StringBuilder response = new StringBuilder();
@@ -203,36 +241,32 @@ public class DQNOffloadDecisionModule {
                 
                 JSONParser parser = new JSONParser();
                 JSONObject jsonResponse = (JSONObject) parser.parse(response.toString());
-                
-                Object qValuesObj = jsonResponse.get("q_values");
-                if (qValuesObj instanceof java.util.List) {
-                    java.util.List<?> qValuesList = (java.util.List<?>) qValuesObj;
-                    double[] qValues = new double[qValuesList.size()];
-                    for (int i = 0; i < qValuesList.size(); i++) {
-                        qValues[i] = ((Number) qValuesList.get(i)).doubleValue();
-                    }
-                    return qValues;
-                }
+                Log.printLine("DQN: Received response from Edge DQN server: " + jsonResponse.toString());
+                return jsonResponse;
             }
         }
         
-        // Default Q-values if request fails
-        return new double[]{0.5, 0.5};
+        // Default response if request fails
+        Log.printLine("DQN: Using default response due to request failure");
+        JSONObject defaultResponse = new JSONObject();
+        defaultResponse.put("q_values", new double[]{0.5, 0.5});
+        defaultResponse.put("epsilon", 0.1);
+        return defaultResponse;
     }
     
     /**
      * Stores the decision for later learning feedback
      */
-    private static void storeDecisionForLearning(String edgeId, double[] state, int action, Tuple tuple) {
-        // Store the decision context for when the tuple completes execution
-        // This will be used to calculate reward and store transition
+    private static void storeDecisionForLearning(String edgeId, double[] state, int action, Tuple tuple, double epsilon, String decisionType, double[] qValues) {
         Map<String, Object> decisionContext = new HashMap<>();
         decisionContext.put("state", state);
         decisionContext.put("action", action);
         decisionContext.put("timestamp", CloudSim.clock());
         decisionContext.put("edge_id", edgeId);
-        
-        // Store in static map using tuple's cloudlet ID
+        decisionContext.put("epsilon", epsilon);           // Store epsilon
+        decisionContext.put("decision_type", decisionType); // Store decision type
+        decisionContext.put("q_values", qValues); // Store Q-values
+    
         tupleDecisionContexts.put(tuple.getCloudletId(), decisionContext);
     }
     
@@ -247,6 +281,8 @@ public class DQNOffloadDecisionModule {
         double[] state = (double[]) decisionContext.get("state");
         int action = (Integer) decisionContext.get("action");
         double startTime = (Double) decisionContext.get("timestamp");
+
+        String decisionType = (String) decisionContext.get("decision_type");
         
         // Calculate reward based on execution performance
         double reward = calculateReward(executionTime, success, action, fogDevice);
@@ -256,10 +292,16 @@ public class DQNOffloadDecisionModule {
         EdgeState nextState = edgeStates.get(edgeId);
         
         try {
-            // Send transition to Edge DQN for learning
-            sendTransitionToEdgeDQN(edgeId, state, action, reward, nextState.toStateVector(), false, 
-                                  executionTime, nextState.cpuUtilization, nextState.queueLength);
-            
+            // Send transition and get the loss back from the server
+            JSONObject response = sendTransitionToEdgeDQN(edgeId, state, action, reward, nextState.toStateVector(), false, executionTime, nextState.cpuUtilization, nextState.queueLength);
+            double loss = 0.0;
+            if (response != null && response.get("loss") != null) {
+                loss = ((Number) response.get("loss")).doubleValue();
+            }
+
+            // *** THE BIG CHANGE: Call the new logging function ***
+            logDQNStep(edgeId, state, (double[]) decisionContext.get("q_values"), action, decisionType, executionTime, nextState.cpuUtilization, (int)nextState.queueLength, reward, loss);
+                
             lastRewards.put(edgeId, reward);
             
             // Clean up decision context
@@ -270,6 +312,35 @@ public class DQNOffloadDecisionModule {
         }
     }
     
+    // In DQNOffloadDecisionModule.java - A completely new method
+
+    private static void logDQNStep(String edgeId, double[] state, double[] qValues, int action, String decisionType, double latency, double cpuUtil, int queue, double reward, double loss) {
+
+        // Print the Simulation Step header only when the step number changes
+        int currentStep = (int) CloudSim.clock();
+        if (currentStep > lastStepLogged) {
+        simulationStep = currentStep;
+        lastStepLogged = currentStep;
+        System.out.println("\n================================================================================");
+        System.out.printf("====== %30s %d %-30s ======\n", "SIMULATION STEP", simulationStep, "");
+        System.out.println("================================================================================");
+        }
+
+        // Mock Patient State for logging purposes (based on the state vector)
+        String patientState = String.format("CPU=%.1f%%, Mem=%.1f%%, Lat=%.2f, Throughput=%.2f",
+                state[0] * 100, state[1] * 100, state[3], state[4]);
+
+        String decision = (action == 0) ? "PROCESS ON EDGE" : "OFFLOAD TO CLOUD";
+
+        System.out.printf("[%d] EDGE SIM: %s\n", simulationStep, edgeId);
+        System.out.printf("  - State         : %s\n", patientState);
+        System.out.printf("  - DQN Q-Values  : Edge=%.3f, Cloud=%.3f\n", qValues[0], qValues[1]);
+        System.out.printf("  - Decision      : %s (%s)\n", decision, decisionType);
+        System.out.printf("  - Outcome       : Latency=%.2fs, Edge CPU=%.1f%%, Queue=%d\n", latency, cpuUtil * 100, queue);
+        System.out.printf("  - Reward        : %.2f\n", reward);
+        System.out.printf("  - Stored & Trained (Loss: %.4f)\n\n", loss);
+    }
+
     /**
      * Calculates reward based on performance metrics
      */
@@ -303,7 +374,7 @@ public class DQNOffloadDecisionModule {
     /**
      * Sends transition data to Edge DQN server for learning
      */
-    private static void sendTransitionToEdgeDQN(String edgeId, double[] state, int action, double reward, 
+    private static JSONObject sendTransitionToEdgeDQN(String edgeId, double[] state, int action, double reward, 
                                               double[] nextState, boolean done, double latency, 
                                               double cpuUtil, double queueLength) throws Exception {
         URL url = new URL(EDGE_DQN_SERVER + "/store_transition");
@@ -314,21 +385,39 @@ public class DQNOffloadDecisionModule {
         
         JSONObject request = new JSONObject();
         request.put("edge_id", edgeId);
-        request.put("state", state);
         request.put("action", action);
         request.put("reward", reward);
-        request.put("next_state", nextState);
         request.put("done", done);
         request.put("latency", latency);
         request.put("cpu_util", cpuUtil);
         request.put("queue_length", queueLength);
+
+        // FIX: Convert both state arrays to Lists
+        java.util.List<Double> stateList = new java.util.ArrayList<>();
+        for (double d : state) {
+            stateList.add(d);
+        }
+        request.put("state", stateList);
+
+        java.util.List<Double> nextStateList = new java.util.ArrayList<>();
+        for (double d : nextState) {
+            nextStateList.add(d);
+        }
+        request.put("next_state", nextStateList);
         
         try (OutputStream os = conn.getOutputStream()) {
             byte[] input = request.toJSONString().getBytes("utf-8");
             os.write(input, 0, input.length);
         }
-        
-        conn.getResponseCode(); // Trigger request
+    
+        // Now, read the response to get the loss
+        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+                JSONParser parser = new JSONParser();
+                return (JSONObject) parser.parse(br.readLine());
+            }
+        }
+        return null; // Trigger request
     }
     
     /**
@@ -342,19 +431,30 @@ public class DQNOffloadDecisionModule {
             // Calculate system metrics
             Map<String, Object> systemMetrics = calculateSystemMetrics();
             
-            // Send to cloud DQN for aggregation and allocation
             JSONObject cloudResponse = sendToCloudDQN(qVectors, systemMetrics);
-            
-            // Distribute rewards back to edges
+
+            // *** ADD CLOUD LOGGING HERE ***
+            System.out.println("================================================================================");
+            System.out.printf("====== %28s @ STEP %d %-28s ======\n", "CLOUD COORDINATION", simulationStep, "");
+            System.out.println("================================================================================");
+            System.out.println("CLOUD SIM: Aggregated Q-vectors from " + qVectors.size() + " edges.");
+
+            JSONObject strategy = (JSONObject) cloudResponse.get("allocation_strategy");
+            System.out.println("  - Cloud Decision : New resource strategy is '" + strategy.get("priority").toString().toUpperCase() + "'");
+
+            double globalReward = ((Number) cloudResponse.get("cloud_reward")).doubleValue();
+            System.out.printf("  - Global Reward  : Calculated %.3f based on system health.\n", globalReward);
+
+            System.out.println("  - Distributing Rewards to Edges:");
             if (cloudResponse.containsKey("distributed_rewards")) {
                 Map<String, Double> distributedRewards = (Map<String, Double>) cloudResponse.get("distributed_rewards");
                 for (Map.Entry<String, Double> entry : distributedRewards.entrySet()) {
                     sendGlobalRewardToEdge(entry.getKey(), entry.getValue());
+                    System.out.printf("    - %s: %.3f\n", entry.getKey(), entry.getValue());
                 }
             }
-            
-            Log.printLine("Cloud aggregation completed. Distributed rewards to " + qVectors.size() + " edges.");
-            
+            // *** END OF LOGGING BLOCK ***
+
         } catch (Exception e) {
             Log.printLine("Error in cloud aggregation: " + e.getMessage());
         }

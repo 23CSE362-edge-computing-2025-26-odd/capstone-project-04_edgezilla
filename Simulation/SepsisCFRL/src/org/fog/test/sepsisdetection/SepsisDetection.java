@@ -1,7 +1,8 @@
 package org.fog.test.sepsisdetection;
 
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
@@ -46,7 +47,7 @@ public class SepsisDetection {
     static final int NUM_OF_WARDS = 3;
     static final int WEARABLES_PER_WARD = 5;
 
-    static final double SENSOR_MEAN_INTERARRIVAL_SECONDS = 5.0;
+    static final double SENSOR_MEAN_INTERARRIVAL_SECONDS = 10.0; // Increased from 5.0 to reduce tuple generation
 
     static final long WEARABLE_MIPS_PER_PE = 500;
     static final int WEARABLE_PES = 1;
@@ -81,11 +82,15 @@ public class SepsisDetection {
     static List<FogDevice> wearables = new ArrayList<FogDevice>();
     static List<Sensor> sensors = new ArrayList<Sensor>();
     static List<Actuator> actuators = new ArrayList<Actuator>();
+    static double finalSimulationTime = 0.0; // Store the final simulation time
 
     public static void main(String[] args) {
         Log.printLine("Starting SepsisDetection (improved) ...");
 
         try {
+            // Set up logging to file
+            PrintStream logStream = new PrintStream(new FileOutputStream("simulation.log", true));
+            Log.setOutput(logStream);
             Log.enable();
 
             int num_user = 1;
@@ -146,15 +151,21 @@ public class SepsisDetection {
             Log.printLine("Starting CloudSim simulation...");
             
             // Add a termination event to ensure simulation ends
-            CloudSim.terminateSimulation(2500.0); // End simulation at 2500 seconds
+            CloudSim.terminateSimulation(60.0); // Set to 60 seconds to see some simulation time
             
             CloudSim.startSimulation();
             Log.printLine("CloudSim simulation completed. Stopping...");
+            
+            // Record the final simulation time BEFORE stopping CloudSim
+            finalSimulationTime = CloudSim.clock();
+            Log.printLine("Final simulation time: " + finalSimulationTime);
+            
             CloudSim.stopSimulation();
             Log.printLine("CloudSim stopped. Recording simulation end...");
 
             // Record simulation end and gather final statistics
             SepsisStatistics.getInstance().recordSimulationEnd();
+            Log.printLine("Simulation end recorded. Final clock was: " + finalSimulationTime);
             Log.printLine("Simulation end recorded. Collecting loop statistics...");
             
             // Extract loop delay information from TimeKeeper results
@@ -164,7 +175,7 @@ public class SepsisDetection {
             exportSummaryCSV();
             Log.printLine("Summary CSV exported.");
 
-            Log.printLine("SepsisDetection finished. Clock: " + CloudSim.clock());
+            Log.printLine("SepsisDetection finished. Final simulation time was: " + finalSimulationTime);
         } catch (Exception e) {
             e.printStackTrace();
             Log.printLine("Exception in SepsisDetection.main()");
@@ -301,72 +312,83 @@ public class SepsisDetection {
 
         application.addAppModule("patient_client", 128);
         application.addAppModule("preprocessor", 32);
+        // CHANGE 1: Use the new custom AppModule for decision making
         application.addAppModule("OffloadDecision", 512);
         application.addAppModule("InferenceEdge", 1024);
         application.addAppModule("InferenceCloud", 2048);
         application.addAppModule("Analytics", 128);
 
-        // Sensor data processing - reduced CPU requirements for more realistic values
+        // Sensor data processing edges
         application.addAppEdge("HR_SPO2", "patient_client", 100.0, 500.0, "HR_SPO2", Tuple.UP, AppEdge.SENSOR);
-        application.addAppEdge("ACCEL",  "patient_client", 50.0, 200.0, "ACCEL",  Tuple.UP, AppEdge.SENSOR);
-        application.addAppEdge("GYRO",   "patient_client", 50.0, 200.0, "GYRO",   Tuple.UP, AppEdge.SENSOR);
-        application.addAppEdge("TEMP",   "patient_client", 30.0,  50.0,  "TEMP",   Tuple.UP, AppEdge.SENSOR);
+        application.addAppEdge("ACCEL", "patient_client", 50.0, 200.0, "ACCEL", Tuple.UP, AppEdge.SENSOR);
+        application.addAppEdge("GYRO", "patient_client", 50.0, 200.0, "GYRO", Tuple.UP, AppEdge.SENSOR);
+        application.addAppEdge("TEMP", "patient_client", 30.0, 50.0, "TEMP", Tuple.UP, AppEdge.SENSOR);
 
+        // Data flow edges
         application.addAppEdge("patient_client", "preprocessor", 50.0, 100.0, "T_CLIENT_RAW", Tuple.UP, AppEdge.MODULE);
-
         application.addAppEdge("preprocessor", "OffloadDecision", 100.0, 200.0, "T_PREPROCESSED", Tuple.UP, AppEdge.MODULE);
-
         application.addAppEdge("OffloadDecision", "InferenceEdge", 2000.0, 200.0, "T_INFER_REQUEST", Tuple.UP, AppEdge.MODULE);
         application.addAppEdge("OffloadDecision", "InferenceCloud", 2000.0, 200.0, "T_OFFLOAD_TO_CLOUD", Tuple.UP, AppEdge.MODULE);
 
-        application.addAppEdge("InferenceEdge",  "patient_client", 50.0,  50.0,  "T_INFER_RESULT", Tuple.DOWN, AppEdge.MODULE);
-        application.addAppEdge("InferenceCloud", "patient_client", 50.0,  100.0, "T_CLOUD_RESULT",  Tuple.DOWN, AppEdge.MODULE);
+        // CHANGE 2: The result from inference now goes directly to an actuator, breaking the loop.
+        application.addAppEdge("InferenceEdge", "ALERT_EDGE", 50.0, 50.0, "T_INFER_RESULT", Tuple.DOWN, AppEdge.ACTUATOR);
+        application.addAppEdge("InferenceCloud", "ALERT_CLOUD", 50.0, 100.0, "T_CLOUD_RESULT", Tuple.DOWN, AppEdge.ACTUATOR);
 
-        application.addAppEdge("patient_client", "ALERT_EDGE",  20.0, 50.0, "T_ALERT_EDGE",  Tuple.DOWN, AppEdge.ACTUATOR);
+        // Fix: Also add edges back to patient_client for proper flow
+        application.addAppEdge("InferenceEdge", "patient_client", 50.0, 50.0, "T_INFER_RESULT", Tuple.DOWN, AppEdge.MODULE);
+        application.addAppEdge("InferenceCloud", "patient_client", 50.0, 100.0, "T_CLOUD_RESULT", Tuple.DOWN, AppEdge.MODULE);
+
+        application.addAppEdge("patient_client", "ALERT_EDGE", 20.0, 50.0, "T_ALERT_EDGE", Tuple.DOWN, AppEdge.ACTUATOR);
         application.addAppEdge("patient_client", "ALERT_CLOUD", 20.0, 50.0, "T_ALERT_CLOUD", Tuple.DOWN, AppEdge.ACTUATOR);
 
-        application.addAppEdge("InferenceEdge",  "Analytics", 100.0, 50.0, "T_INFER_RESULT", Tuple.UP, AppEdge.MODULE);
-        application.addAppEdge("InferenceCloud", "Analytics", 100.0, 50.0, "T_CLOUD_RESULT",  Tuple.UP, AppEdge.MODULE);
+        // Analytics path remains the same
+        application.addAppEdge("InferenceEdge", "Analytics", 100.0, 50.0, "T_INFER_RESULT", Tuple.UP, AppEdge.MODULE);
+        application.addAppEdge("InferenceCloud", "Analytics", 100.0, 50.0, "T_CLOUD_RESULT", Tuple.UP, AppEdge.MODULE);
 
+        // Tuple mappings for the first steps
         application.addTupleMapping("patient_client", "HR_SPO2", "T_CLIENT_RAW", new FractionalSelectivity(1.0));
-        application.addTupleMapping("patient_client", "ACCEL",   "T_CLIENT_RAW", new FractionalSelectivity(1.0));
-        application.addTupleMapping("patient_client", "GYRO",    "T_CLIENT_RAW", new FractionalSelectivity(1.0));
-        application.addTupleMapping("patient_client", "TEMP",    "T_CLIENT_RAW", new FractionalSelectivity(1.0));
-
+        application.addTupleMapping("patient_client", "ACCEL", "T_CLIENT_RAW", new FractionalSelectivity(1.0));
+        application.addTupleMapping("patient_client", "GYRO", "T_CLIENT_RAW", new FractionalSelectivity(1.0));
+        application.addTupleMapping("patient_client", "TEMP", "T_CLIENT_RAW", new FractionalSelectivity(1.0));
         application.addTupleMapping("preprocessor", "T_CLIENT_RAW", "T_PREPROCESSED", new FractionalSelectivity(1.0));
 
-        // Temporarily use static selectivity to fix infinite loop issue
-        // application.addTupleMapping("OffloadDecision", "T_PREPROCESSED", "T_INFER_REQUEST", new FractionalSelectivity(OFFLOAD_TO_EDGE_FRACTION));
-        // application.addTupleMapping("OffloadDecision", "T_PREPROCESSED", "T_OFFLOAD_TO_CLOUD", new FractionalSelectivity(OFFLOAD_TO_CLOUD_FRACTION));
-        // This is what you should have instead
-        application.addTupleMapping("OffloadDecision", "T_PREPROCESSED", "T_INFER_REQUEST", DynamicDQNSelectivity.getEdgeInstance());
-        application.addTupleMapping("OffloadDecision", "T_PREPROCESSED", "T_OFFLOAD_TO_CLOUD", DynamicDQNSelectivity.getCloudInstance());
+        // Add back the DQN selectivity for offloading decisions
+        DynamicDQNSelectivity edgeSelectivity = new DynamicDQNSelectivity("EDGE");
+        DynamicDQNSelectivity cloudSelectivity = new DynamicDQNSelectivity("CLOUD");
+        application.addTupleMapping("OffloadDecision", "T_PREPROCESSED", "T_INFER_REQUEST", edgeSelectivity);
+        application.addTupleMapping("OffloadDecision", "T_PREPROCESSED", "T_OFFLOAD_TO_CLOUD", cloudSelectivity);
 
         application.addTupleMapping("InferenceEdge", "T_INFER_REQUEST", "T_INFER_RESULT", new FractionalSelectivity(1.0));
         application.addTupleMapping("InferenceCloud", "T_OFFLOAD_TO_CLOUD", "T_CLOUD_RESULT", new FractionalSelectivity(1.0));
 
-        application.addTupleMapping("patient_client", "T_INFER_RESULT", "T_ALERT_EDGE",  new FractionalSelectivity(1.0));
+        // CHANGE 4: The patient_client to actuator mappings are also DELETED.
+        // This is now handled by the Inference modules directly.
+        
+        // Add back the patient_client to actuator mappings
+        application.addTupleMapping("patient_client", "T_INFER_RESULT", "T_ALERT_EDGE", new FractionalSelectivity(1.0));
         application.addTupleMapping("patient_client", "T_CLOUD_RESULT", "T_ALERT_CLOUD", new FractionalSelectivity(1.0));
 
         List<AppLoop> loops = new ArrayList<AppLoop>();
 
-        // Edge path loop with statistics tracking
+        // CHANGE 5: Correct the AppLoop definitions to reflect the new, shorter data flow.
+        // The loop now ends when the actuator receives the result.
         AppLoop edgeLoop = new AppLoop(new ArrayList<String>() {{
+            add("HR_SPO2"); // Start from a sensor
             add("patient_client");
             add("preprocessor");
             add("OffloadDecision");
             add("InferenceEdge");
-            add("patient_client");
+            add("ALERT_EDGE"); // End at the actuator
         }});
         loops.add(edgeLoop);
 
-        // Cloud path loop with statistics tracking
         AppLoop cloudLoop = new AppLoop(new ArrayList<String>() {{
+            add("HR_SPO2"); // Start from a sensor
             add("patient_client");
             add("preprocessor");
             add("OffloadDecision");
             add("InferenceCloud");
-            add("patient_client");
+            add("ALERT_CLOUD"); // End at the actuator
         }});
         loops.add(cloudLoop);
 
@@ -377,7 +399,7 @@ public class SepsisDetection {
 
     private static void exportConfigCSV() {
         String fname = "sepsis_sim_config.csv";
-        try (FileWriter fw = new FileWriter(fname)) {
+        try (PrintStream fw = new PrintStream(fname)) {
             fw.append("parameter,value\n");
             fw.append("NUM_OF_WARDS,").append(Integer.toString(NUM_OF_WARDS)).append("\n");
             fw.append("WEARABLES_PER_WARD,").append(Integer.toString(WEARABLES_PER_WARD)).append("\n");
@@ -392,21 +414,21 @@ public class SepsisDetection {
             fw.append("OFFLOAD_TO_CLOUD_FRACTION,").append(Double.toString(OFFLOAD_TO_CLOUD_FRACTION)).append("\n");
             fw.flush();
             Log.printLine("Exported experiment configuration to " + fname);
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.printLine("Failed to write config CSV: " + e.getMessage());
         }
     }
 
     private static void exportSummaryCSV() {
         String fname = "sepsis_sim_summary.csv";
-        try (FileWriter fw = new FileWriter(fname)) {
+        try (PrintStream fw = new PrintStream(fname)) {
             SepsisStatistics stats = SepsisStatistics.getInstance();
             
             fw.append("metric,value\n");
             
             // Basic simulation info
             fw.append("simulation_time_s,").append(Double.toString(stats.getSimulationDuration())).append("\n");
-            fw.append("simulation_clock_final,").append(Double.toString(CloudSim.clock())).append("\n");
+            fw.append("simulation_clock_final,").append(Double.toString(finalSimulationTime)).append("\n");
             fw.append("num_fog_devices,").append(Integer.toString(fogDevices.size())).append("\n");
             fw.append("num_wearables,").append(Integer.toString(wearables.size())).append("\n");
             fw.append("num_sensors,").append(Integer.toString(sensors.size())).append("\n");
@@ -440,52 +462,10 @@ public class SepsisDetection {
             
             fw.flush();
             Log.printLine("Exported simulation summary with calculated metrics to " + fname);
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.printLine("Failed to write summary CSV: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-    
-    private static void startPeriodicDQNUpdates() {
-        Thread dqnUpdateThread = new Thread(() -> {
-            try {
-                long startTime = System.currentTimeMillis();
-                long maxRuntime = 300000;
-                
-                while (System.currentTimeMillis() - startTime < maxRuntime) {
-                    Thread.sleep(5000);
-                    
-                    if (CloudSim.clock() > 2500) {
-                        break;
-                    }
-                    
-                    for (FogDevice device : fogDevices) {
-                        if (device.getName().startsWith("edge_server_")) {
-                            try {
-                                Tuple dummyTuple = new Tuple("sepsis_app", 999, 1, 100, 1, 50, 50, 
-                                        new org.cloudbus.cloudsim.UtilizationModelFull(),
-                                        new org.cloudbus.cloudsim.UtilizationModelFull(),
-                                        new org.cloudbus.cloudsim.UtilizationModelFull());
-                                dummyTuple.setTupleType("T_PREPROCESSED");
-                                
-                                DQNOffloadDecisionModule.makeOffloadingDecision(dummyTuple, device);
-                            } catch (Exception deviceError) {
-                                Log.printLine("Error processing device " + device.getName() + ": " + deviceError.getMessage());
-                            }
-                        }
-                    }
-                }
-                Log.printLine("DQN update thread completed normally");
-            } catch (InterruptedException e) {
-                Log.printLine("DQN update thread interrupted: " + e.getMessage());
-            } catch (Exception e) {
-                Log.printLine("Error in DQN update thread: " + e.getMessage());
-            }
-        });
-        
-        dqnUpdateThread.setDaemon(true);
-        dqnUpdateThread.start();
-        Log.printLine("Started periodic DQN decision updates (max 5 minutes)");
     }
     
     /**
@@ -495,38 +475,22 @@ public class SepsisDetection {
         try {
             SepsisStatistics stats = SepsisStatistics.getInstance();
             
-            // Use estimates based on static selectivity since TimeKeeper API is different
-            double edgeSelectivity = OFFLOAD_TO_EDGE_FRACTION;
-            double cloudSelectivity = OFFLOAD_TO_CLOUD_FRACTION;
+            // Get actual counts from the statistics instead of using estimates
+            int actualEdgeLoops = stats.getTotalEdgeLoops();
+            int actualCloudLoops = stats.getTotalCloudLoops();
+            int actualPreprocessedTuples = stats.getTupleProcessingCount("T_PREPROCESSED");
             
-            // Estimate loop counts based on total tuples generated
-            int totalSensors = sensors.size();
-            int estimatedTotalTuples = totalSensors * 400; // rough estimate based on simulation time
+            Log.printLine("Actual statistics from simulation:");
+            Log.printLine("  - Edge loops: " + actualEdgeLoops);
+            Log.printLine("  - Cloud loops: " + actualCloudLoops);
+            Log.printLine("  - Preprocessed tuples: " + actualPreprocessedTuples);
+            Log.printLine("  - Final simulation clock: " + CloudSim.clock());
             
-            int estimatedEdgeLoops = (int) (estimatedTotalTuples * edgeSelectivity);
-            int estimatedCloudLoops = (int) (estimatedTotalTuples * cloudSelectivity);
-            
-            // Record loop latencies using the values we saw in output
-            for (int i = 0; i < estimatedEdgeLoops; i++) {
-                stats.recordEdgeLoopLatency(14.99); // From actual simulation output
+            // If we don't have real statistics yet, that means the DQN decisions weren't recorded properly
+            // Let's not override with hardcoded values
+            if (actualEdgeLoops == 0 && actualCloudLoops == 0 && actualPreprocessedTuples == 0) {
+                Log.printLine("Warning: No actual statistics recorded during simulation. This means DQN decisions may not be working.");
             }
-            
-            for (int i = 0; i < estimatedCloudLoops; i++) {
-                stats.recordCloudLoopLatency(72.82); // From actual simulation output
-            }
-            
-            // Record tuple processing for edge and cloud
-            for (int i = 0; i < estimatedEdgeLoops; i++) {
-                stats.recordTupleProcessing("T_INFER_REQUEST");
-            }
-            for (int i = 0; i < estimatedCloudLoops; i++) {
-                stats.recordTupleProcessing("T_OFFLOAD_TO_CLOUD");
-            }
-            for (int i = 0; i < estimatedTotalTuples; i++) {
-                stats.recordTupleProcessing("T_PREPROCESSED");
-            }
-            
-            Log.printLine("Collected loop statistics successfully: " + estimatedEdgeLoops + " edge loops, " + estimatedCloudLoops + " cloud loops");
             
         } catch (Exception e) {
             Log.printLine("Error collecting loop statistics: " + e.getMessage());

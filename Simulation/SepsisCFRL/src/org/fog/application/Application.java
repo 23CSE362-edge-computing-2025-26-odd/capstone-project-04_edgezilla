@@ -12,6 +12,7 @@ import org.fog.entities.Tuple;
 import org.fog.scheduler.TupleScheduler;
 import org.fog.utils.FogUtils;
 import org.fog.utils.GeoCoverage;
+import org.fog.entities.FogDevice;
 
 /**
  * Class represents an application in the Distributed Dataflow Model.
@@ -202,6 +203,7 @@ public class Application {
 				if(module.getSelectivityMap().get(pair)==null)
 					continue;
 				SelectivityModel selectivityModel = module.getSelectivityMap().get(pair);
+				selectivityModel.setCurrentTupleAndDevice(inputTuple, (FogDevice)module.getHost().getDatacenter());
 				if(selectivityModel.canSelect()){
 					//TODO check if the edge is ACTUATOR, then create multiple tuples
 					if(edge.getEdgeType() == AppEdge.ACTUATOR){
