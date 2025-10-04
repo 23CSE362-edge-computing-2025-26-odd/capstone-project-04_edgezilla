@@ -10,6 +10,7 @@ from dqn_system.state_tracker import SystemStateTracker
 from dqn_system.reward_calculator import LocalRewardCalculator
 from servers.server_manager import ServerManager
 from analysis.performance_monitor import PerformanceMonitor
+from application.data_generator import PatientStateModel
 
 class SepsisSimulation:
     def __init__(self, strategy='dqn'):
@@ -27,6 +28,9 @@ class SepsisSimulation:
         # --- Logic for handling different strategies ---
         self.server_manager = None
         self.state_tracker = None
+        # Initialize ML-based sepsis detection model
+        self.patient_state_model = PatientStateModel()
+        
         if self.strategy == 'dqn':
             self.server_manager = ServerManager(state_size=5, action_size=2)
             self.server_manager.start_servers()
@@ -52,11 +56,24 @@ class SepsisSimulation:
             health_data['ward_id'] = wearable.ward_id
             self.monitor.energy.record_network_energy('wireless', config.HEALTH_DATA_PACKET_SIZE_KB)
 
+            # Perform sepsis detection using ML server
+            sepsis_prediction = self.patient_state_model.calculate_sepsis_risk(health_data)
+            patient_state = self.patient_state_model.update_patient_state(health_data)
+            health_data['sepsis_prediction'] = sepsis_prediction
+            health_data['patient_state'] = patient_state
+            
+            print(f"Time {self.env.now:.2f}: Wearable-{wearable.device_id} - Sepsis Risk: {sepsis_prediction}, State: {patient_state}")
+
             action, current_state = self._make_offloading_decision(health_data)
             if self.strategy == 'dqn':
                 self.monitor.accuracy.evaluate_decision(current_state, action)
             
             processing_duration = yield self.env.process(self._execute_task(health_data, action))
+            
+            # Log sepsis detection results
+            if health_data.get('sepsis_prediction', 0) == 1:
+                location = 'edge' if action == 0 else 'cloud'
+                print(f"⚠️  SEPSIS ALERT: Patient {wearable.device_id} (Ward {wearable.ward_id}) - Processed on {location.upper()}")
 
             # --- END: Correct End-to-End Latency Measurement ---
             e2e_latency = self.env.now - e2e_start_time

@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import config
 
 class MetricsAdapter:
     """Adapts the raw simulation metrics to the format expected by enhanced exporters."""
@@ -49,16 +50,30 @@ class MetricsAdapter:
                 edge_count = total_tasks // 2
                 cloud_count = total_tasks - edge_count
         
+        # FIX: Calculate separate latencies for edge and cloud tasks
+        # Previous issue: Used global end_to_end_latency average for all tasks, causing
+        # cloud latency changes to incorrectly affect edge task latencies
+        edge_base_latency = (config.LATENCY_WEARABLE_SENSOR + config.LATENCY_WEARABLE_TO_EDGE) / 1000.0  # Convert ms to s
+        cloud_base_latency = edge_base_latency + (config.LATENCY_EDGE_TO_CLOUD / 1000.0)
+        
+        # Get processing times based on task requirements and CPU capacities
+        edge_processing_time = config.TASK_CPU_REQUIREMENT / config.EDGE_SERVER_CPU
+        cloud_processing_time = (config.TASK_CPU_REQUIREMENT * 2) / config.CLOUD_DATACENTER_CPU
+        
         # Create performance DataFrame
         for i in range(total_tasks):
             is_edge = i < edge_count
-            latency = raw_metrics['latency']['end_to_end_latency']['mean_s']
             
-            # Add queue wait times if available
-            if is_edge and 'edge_queue_wait' in raw_metrics['latency']:
-                latency += raw_metrics['latency']['edge_queue_wait'].get('mean_s', 0)
-            elif not is_edge and 'cloud_queue_wait' in raw_metrics['latency']:
-                latency += raw_metrics['latency']['cloud_queue_wait'].get('mean_s', 0)
+            if is_edge:
+                # Edge latency = sensor + wireless + processing + queue wait
+                latency = edge_base_latency + edge_processing_time
+                if 'edge_queue_wait' in raw_metrics['latency']:
+                    latency += raw_metrics['latency']['edge_queue_wait'].get('mean_s', 0)
+            else:
+                # Cloud latency = sensor + wireless + network to cloud + processing + queue wait
+                latency = cloud_base_latency + cloud_processing_time
+                if 'cloud_queue_wait' in raw_metrics['latency']:
+                    latency += raw_metrics['latency']['cloud_queue_wait'].get('mean_s', 0)
                 
             performance_data.append({
                 'timestamp': timestamps[i],
@@ -82,10 +97,15 @@ class MetricsAdapter:
             
             # Create learning DataFrame
             for i in range(total_tasks):
+                # Calculate reward based on the actual latency for this task
+                is_edge = i < edge_count
+                task_latency = edge_base_latency + edge_processing_time if is_edge else cloud_base_latency + cloud_processing_time
+                reward = 1.0 / task_latency  # Higher reward for lower latency
+                
                 learning_data.append({
                     'timestamp': timestamps[i],
                     'agent_id': f'ward_{i % 3}',  # One agent per ward
-                    'reward': 1.0 / raw_metrics['latency']['end_to_end_latency']['mean_s'],
+                    'reward': reward,
                     'loss': 0.1 * np.exp(-i/1000),  # Simulated decreasing loss
                     'epsilon': epsilons[i]
                 })

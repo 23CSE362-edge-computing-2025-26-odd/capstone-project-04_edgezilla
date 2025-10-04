@@ -3,6 +3,9 @@ import numpy as np
 from application.data_generator import HealthDataGenerator
 import config
 
+# Shared data generator instance for all wearables
+_shared_data_generator = None
+
 class WearableDevice:
     """Represents a patient-monitoring wearable device."""
     def __init__(self, env, device_id, ward_id, edge_server):
@@ -13,7 +16,11 @@ class WearableDevice:
         self.cpu_capacity = config.WEARABLE_CPU
         self.memory = config.WEARABLE_RAM
         self.power_consumption = (config.POWER_WEARABLE_IDLE, config.POWER_WEARABLE_BUSY)
-        self.data_generator = HealthDataGenerator()
+        # Use shared data generator instance to avoid row replication
+        global _shared_data_generator
+        if _shared_data_generator is None:
+            _shared_data_generator = HealthDataGenerator()
+        self.data_generator = _shared_data_generator
 
     def generate_health_data(self):
         """Generates a new set of health data."""
