@@ -4,13 +4,10 @@ import time
 import os
 import config
 from main_simulator import SepsisSimulation
-from analysis.visualizer import LearningVisualizer, PerformanceVisualizer
 from utils.logger import setup_logging
-
-# Import the new, dedicated exporter
-from analysis.metrics_exporter import MetricsExporter
-# The old exporter can be removed or deprecated
-# from analysis.results_exporter import DataExporter
+from analysis.enhanced_metrics_exporter import EnhancedMetricsExporter
+from analysis.enhanced_visualizer import EnhancedVisualizer
+from analysis.metrics_adapter import MetricsAdapter
 
 def run_single_experiment(strategy):
     """Runs the simulation and generates all performance reports and charts."""
@@ -21,16 +18,18 @@ def run_single_experiment(strategy):
     simulation = SepsisSimulation(strategy=strategy)
     final_metrics = simulation.run()
     
-    # 2. Export the new, comprehensive reports
-    exporter = MetricsExporter(final_metrics, strategy_name=strategy)
-    exporter.export_to_json()
-    exporter.export_to_summary_report()
+    # 2. Convert metrics to the required format
+    converted_metrics = MetricsAdapter.convert_metrics(final_metrics, strategy)
+    
+    # 3. Export comprehensive metrics to CSV files
+    metrics_exporter = EnhancedMetricsExporter(converted_metrics, strategy_name=strategy)
+    metrics_exporter.export_all()
+    print(f"Exported all metrics to CSV files for strategy: {strategy}")
 
-    # 3. Generate Visualizations (This part is mostly unchanged)
-    # Note: For detailed charts, you might want to log data points during the
-    # simulation and convert them to DataFrames, similar to Iteration 3's
-    # metrics_collector.py. For this prompt, we focus on the final aggregated reports.
-    print(f"Visualizations for '{strategy}' would be generated here.")
+    # 4. Generate enhanced visualizations
+    visualizer = EnhancedVisualizer(converted_metrics, strategy_name=strategy)
+    visualizer.plot_all()
+    print(f"Generated all visualization charts for strategy: {strategy}")
     print(f"{'='*20} FINISHED EXPERIMENT: {strategy.upper()} {'='*20}")
 
 def main():

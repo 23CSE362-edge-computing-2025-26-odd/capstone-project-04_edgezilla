@@ -14,7 +14,7 @@ CLOUD_DATACENTER_RAM = 64 * 1024  # MB
 LATENCY_WEARABLE_SENSOR = 6
 LATENCY_WEARABLE_TO_EDGE = 5
 LATENCY_EDGE_TO_CLOUD = 30
-SENSOR_DATA_GENERATION_INTERVAL = 10
+SENSOR_DATA_GENERATION_INTERVAL = 7  # Decreased to generate data more frequently
 HEALTH_DATA_PARAMS = {
     "heart_rate": (60, 100),       # beats per minute
     "blood_oxygen": (95, 100),    # percentage
@@ -24,18 +24,18 @@ HEALTH_DATA_PARAMS = {
 POWER_WEARABLE_BUSY = 0.25
 DATA_TUPLE_SIZE = 2  # KB
 
-TASK_CPU_REQUIREMENT = 100
+TASK_CPU_REQUIREMENT = 200  # Doubled to increase processing time per task
 
 # --- DQN Hyperparameters ---
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 2e-4  # Increased to speed up learning
 GAMMA = 0.99
 EPSILON_START = 1.0
 EPSILON_END = 0.01
-EPSILON_DECAY = 0.9995
-BATCH_SIZE = 64
-MEMORY_CAPACITY = 10000
-DQN_TRAINING_INTERVAL = 50
-DQN_TARGET_UPDATE_INTERVAL = 200
+EPSILON_DECAY = 0.995  # Faster decay for quicker transition to exploitation
+BATCH_SIZE = 128  # Increased for better learning stability
+MEMORY_CAPACITY = 20000  # Increased to store more experiences
+DQN_TRAINING_INTERVAL = 25  # Train more frequently
+DQN_TARGET_UPDATE_INTERVAL = 100  # Update target network more frequently
 
 # --- Experiment Configurations ---
 EXPERIMENT_STRATEGIES = ['dqn', 'always_edge', 'always_cloud', 'random']

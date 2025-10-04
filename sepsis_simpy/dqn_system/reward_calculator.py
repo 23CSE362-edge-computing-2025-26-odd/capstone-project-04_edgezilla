@@ -1,22 +1,50 @@
 class LocalRewardCalculator:
     """Calculates rewards based on local (edge-level) performance metrics."""
-    def calculate_local_reward(self, execution_time, success_status=True, resource_utilization=0.5):
+    def calculate_local_reward(self, execution_time, success_status=True, resource_utilization=0.5, action=0, queue_length=0):
         """
-        Calculates a reward for a single action.
-        A lower execution time should result in a higher reward.
+        Calculates a sophisticated reward that considers multiple factors:
+        - Execution time (lower is better)
+        - Success status (failures are heavily penalized)
+        - Resource utilization (penalize high edge utilization)
+        - Action type (small penalty for cloud offloading)
+        - Queue length (penalize long queues at edge)
+        
+        Args:
+            execution_time (float): Time taken to execute the task
+            success_status (bool): Whether the task completed successfully
+            resource_utilization (float): Current CPU utilization (0-1)
+            action (int): 0 for edge processing, 1 for cloud offloading
+            queue_length (int): Current length of the processing queue
         """
-        # The core component of the reward is inverse of execution time
-        # We add a small constant to avoid division by zero
-        reward = 1.0 / (execution_time + 0.01)
-
-        # Penalize for failures (if applicable)
+        # Base reward inversely proportional to execution time
+        reward = 2.0 / (execution_time + 0.01)
+        
+        # Penalize failures heavily
         if not success_status:
-            reward -= 10.0 # Heavy penalty for failure
-
-        # Optional: Penalize for very high resource utilization to encourage load balancing
-        if resource_utilization > 0.9:
-            reward *= (1.0 - (resource_utilization - 0.9))
+            reward -= 20.0
             
+        # Edge processing specific penalties (action == 0)
+        if action == 0:
+            # Penalize high resource utilization with progressive severity
+            if resource_utilization > 0.7:
+                penalty = (resource_utilization - 0.7) * 3.0
+                reward *= max(0.1, 1.0 - penalty)
+                
+            # Penalize long queue lengths
+            if queue_length > 5:
+                queue_penalty = min(0.8, (queue_length - 5) * 0.1)
+                reward *= (1.0 - queue_penalty)
+        
+        # Cloud offloading penalty (action == 1)
+        else:
+            # Small constant penalty for using cloud resources
+            cloud_cost_penalty = 0.2
+            reward -= cloud_cost_penalty
+            
+            # But if edge is heavily loaded, reduce the cloud penalty
+            if resource_utilization > 0.8 or queue_length > 8:
+                reward += cloud_cost_penalty * 0.5  # Partial refund of the penalty
+                
         return reward
 
 class GlobalRewardCalculator:

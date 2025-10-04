@@ -29,9 +29,26 @@ class MetricsExporter:
             f.write("## Latency Metrics ##\n")
             for name, data in self.metrics.get('latency', {}).items():
                 f.write(f"- {name.replace('_', ' ').title()}:\n")
-                f.write(f"    - Average: {data['mean_s'] * 1000:.2f} ms\n")
-                f.write(f"    - Median:  {data['median_s'] * 1000:.2f} ms\n")
-                f.write(f"    - 95th Percentile: {data['p95_s'] * 1000:.2f} ms\n\n")
+                
+                # Convert to milliseconds and format based on magnitude
+                mean_ms = data['mean_s'] * 1000
+                median_ms = data['median_s'] * 1000
+                p95_ms = data['p95_s'] * 1000
+                
+                def format_latency(value_ms):
+                    """Format latency values with appropriate precision based on magnitude"""
+                    if value_ms < 0.01:  # < 0.01ms, use scientific notation
+                        return f"{value_ms:.2e} ms"
+                    elif value_ms < 0.1:  # < 0.1ms, show 4 decimal places
+                        return f"{value_ms:.4f} ms"
+                    elif value_ms < 1.0:  # < 1ms, show 3 decimal places
+                        return f"{value_ms:.3f} ms"
+                    else:  # >= 1ms, show 2 decimal places
+                        return f"{value_ms:.2f} ms"
+                
+                f.write(f"    - Average: {format_latency(mean_ms)}\n")
+                f.write(f"    - Median:  {format_latency(median_ms)}\n")
+                f.write(f"    - 95th Percentile: {format_latency(p95_ms)}\n\n")
 
             # Throughput
             f.write("## Throughput Metrics ##\n")
