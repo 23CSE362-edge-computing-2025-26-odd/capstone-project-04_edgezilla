@@ -116,6 +116,7 @@ class PatientStateModel:
         self.states = ['normal', 'suspicious', 'critical_sepsis']
         self.current_state = 'normal'
         self.last_prediction = 0
+        self.last_inference_time_ms = 15.0  # Default fallback time
         
     def update_patient_state(self, health_data=None):
         """
@@ -155,6 +156,9 @@ class PatientStateModel:
         Returns:
             0 or 1 (no sepsis / sepsis detected)
         """
+        import time
+        start_time = time.perf_counter()
+        
         try:
             # Prepare the payload for the ML API
             payload = {
@@ -175,6 +179,11 @@ class PatientStateModel:
                 result = response.json()
                 prediction = int(result.get("prediction", 0))
                 self.last_prediction = prediction
+                
+                # Store actual ML inference time
+                inference_time = time.perf_counter() - start_time
+                self.last_inference_time_ms = inference_time * 1000
+                
                 return prediction
             else:
                 print(f"ML API error: {response.status_code} - {response.text}")
@@ -183,9 +192,13 @@ class PatientStateModel:
         except requests.exceptions.RequestException as e:
             print(f"Failed to connect to ML server: {e}")
             # Fallback to simple heuristic if ML server is unavailable
+            inference_time = time.perf_counter() - start_time
+            self.last_inference_time_ms = inference_time * 1000
             return self._fallback_sepsis_detection(data)
         except Exception as e:
             print(f"Error in sepsis prediction: {e}")
+            inference_time = time.perf_counter() - start_time
+            self.last_inference_time_ms = inference_time * 1000
             return self.last_prediction
     
     def _fallback_sepsis_detection(self, data):

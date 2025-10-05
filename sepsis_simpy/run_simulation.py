@@ -1,5 +1,7 @@
 from main_simulator import SepsisSimulation
 from utils.logger import setup_logging
+from analysis.metrics_exporter import MetricsExporter
+from analysis.metrics_adapter import MetricsAdapter
 import logging
 import time
 import argparse
@@ -18,7 +20,7 @@ def main():
     
     # Override config duration if specified
     if args.duration != config.SIMULATION_DURATION:
-        print(f"⚡ Overriding simulation duration: {config.SIMULATION_DURATION}s → {args.duration}s")
+        print(f"Overriding simulation duration: {config.SIMULATION_DURATION}s → {args.duration}s")
         config.SIMULATION_DURATION = args.duration
     
     # Setup logging to write to simulation_run.log
@@ -26,15 +28,41 @@ def main():
     logger = logging.getLogger(__name__)
     
     logger.info(f"Initializing Sepsis Detection CFRL System Simulation (Strategy: {args.strategy.upper()})...")
-    print(f"🏥 Running {args.strategy.upper()} simulation for {args.duration} seconds...")
+    print(f"Running {args.strategy.upper()} simulation for {args.duration} seconds...")
     start_time = time.time()
 
     # Create and run the simulation with specified strategy
     simulation = SepsisSimulation(strategy=args.strategy)
-    dataframes = simulation.run()
+    final_metrics = simulation.run()
 
+    # Generate complete output suite: CSV data, visualizations, and summary report
+    converted_metrics = MetricsAdapter.convert_metrics(final_metrics, args.strategy)
+    
+    # 1. Export comprehensive metrics to CSV files
+    from analysis.enhanced_metrics_exporter import EnhancedMetricsExporter
+    enhanced_exporter = EnhancedMetricsExporter(converted_metrics, strategy_name=args.strategy)
+    enhanced_exporter.export_all()
+    print(f"Exported all metrics to CSV files for strategy: {args.strategy}")
+    
+    # 2. Generate human-readable summary report
+    summary_exporter = MetricsExporter(converted_metrics, args.strategy)
+    summary_exporter.export_to_summary_report()
+    print(f"Generated readable performance summary for strategy: {args.strategy}")
+    
+    # 3. Generate enhanced visualizations
+    from analysis.enhanced_visualizer import EnhancedVisualizer
+    visualizer = EnhancedVisualizer(converted_metrics, strategy_name=args.strategy)
+    visualizer.plot_all()
+    print(f"Generated all visualization charts for strategy: {args.strategy}")
+    
+    print(f"\nPerformance Summary:")
+    print(f"   Tasks Processed: {final_metrics['throughput']['completed_tasks']['task_processed']}")
+    print(f"   Average Latency: {final_metrics['latency']['end_to_end_latency']['mean_s']*1000:.2f}ms")
+    print(f"   Total Energy: {final_metrics['energy']['total_system_energy_joules']:.2f}J")
+    print(f"\nAll outputs saved to: results/data/{args.strategy}/ and results/charts/{args.strategy}/")
+    
     end_time = time.time()
-    print(f"✅ Simulation completed in {end_time - start_time:.2f} real seconds")
+    print(f"Simulation completed in {end_time - start_time:.2f} real seconds")
     logger.info(f"Total real-world execution time: {end_time - start_time:.2f} seconds.")
 
 if __name__ == "__main__":

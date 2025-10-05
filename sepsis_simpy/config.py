@@ -53,7 +53,12 @@ HEALTH_DATA_PARAMS = {
 }
 
 # Typical lightweight processing (e.g., feature extraction/classification)
-TASK_CPU_REQUIREMENT = 100  # MIPS per task → yields ~12 ms (edge) & ~73 ms (cloud)
+# Task CPU requirements (MIPS)
+TASK_CPU_REQUIREMENT = 100  # MIPS per task
+
+# ML Inference Time (seconds)
+# Realistic ML inference time without HTTP overhead
+ML_INFERENCE_TIME = 0.015  # 15ms for sepsis detection model → yields ~12 ms (edge) & ~73 ms (cloud)
 DATA_TUPLE_SIZE = 4  # KB (health packet size)
 
 # ===================================================================

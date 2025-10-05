@@ -56,7 +56,7 @@ class SepsisSimulation:
             health_data['ward_id'] = wearable.ward_id
             self.monitor.energy.record_network_energy('wireless', config.HEALTH_DATA_PACKET_SIZE_KB)
 
-            # Perform sepsis detection using ML server
+            # Perform sepsis detection (ML inference will be added to processing time)
             sepsis_prediction = self.patient_state_model.calculate_sepsis_risk(health_data)
             patient_state = self.patient_state_model.update_patient_state(health_data)
             health_data['sepsis_prediction'] = sepsis_prediction
@@ -73,7 +73,7 @@ class SepsisSimulation:
             # Log sepsis detection results
             if health_data.get('sepsis_prediction', 0) == 1:
                 location = 'edge' if action == 0 else 'cloud'
-                print(f"⚠️  SEPSIS ALERT: Patient {wearable.device_id} (Ward {wearable.ward_id}) - Processed on {location.upper()}")
+                print(f"SEPSIS ALERT: Patient {wearable.device_id} (Ward {wearable.ward_id}) - Processed on {location.upper()}")
 
             # --- END: Correct End-to-End Latency Measurement ---
             e2e_latency = self.env.now - e2e_start_time
@@ -112,7 +112,8 @@ class SepsisSimulation:
         """Uses env.now to correctly measure simulation queue times."""
         if action == 0: # Process on Edge
             edge = self.edge_servers[data['ward_id']]
-            proc_time = config.TASK_CPU_REQUIREMENT / edge.cpu_capacity
+            # Add ML inference time to processing time
+            proc_time = (config.TASK_CPU_REQUIREMENT / edge.cpu_capacity) + config.ML_INFERENCE_TIME
             
             queue_arrival_time = self.env.now
             with edge.cpu.request() as req:
@@ -134,7 +135,8 @@ class SepsisSimulation:
             self.monitor.energy.record_network_energy('wired', config.HEALTH_DATA_PACKET_SIZE_KB)
 
             cloud = self.cloud
-            proc_time = (config.TASK_CPU_REQUIREMENT * 2) / cloud.cpu_capacity
+            # Add ML inference time to processing time
+            proc_time = ((config.TASK_CPU_REQUIREMENT * 2) / cloud.cpu_capacity) + config.ML_INFERENCE_TIME
             
             queue_arrival_time = self.env.now
             with cloud.resource_pools.request() as req:

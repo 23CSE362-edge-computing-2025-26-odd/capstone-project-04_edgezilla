@@ -110,8 +110,58 @@ class EnhancedVisualizer:
         plt.savefig(os.path.join(self.output_dir, 'epsilon_decay.png'), dpi=300)
         plt.close()
         
+    def create_ml_inference_chart(self, output_path):
+        """Create ML inference time visualization."""
+        if 'performance' not in self.metrics or self.metrics['performance'].empty:
+            print("No performance data available for ML inference visualization")
+            return
+        
+        perf_df = self.metrics['performance']
+        if 'ml_inference_time_ms' not in perf_df.columns:
+            print("No ML inference time data available")
+            return
+            
+        plt.figure(figsize=(12, 8))
+        
+        # Create ML inference time distribution
+        plt.subplot(2, 2, 1)
+        sns.histplot(data=perf_df, x='ml_inference_time_ms', bins=30, kde=True)
+        plt.title(f'ML Inference Time Distribution ({self.strategy_name})')
+        plt.xlabel('ML Inference Time (ms)')
+        plt.ylabel('Count')
+        
+        # ML inference over time
+        plt.subplot(2, 2, 2)
+        sns.lineplot(data=perf_df, x='timestamp', y='ml_inference_time_ms', alpha=0.7)
+        plt.title('ML Inference Time Over Time')
+        plt.xlabel('Time')
+        plt.ylabel('ML Inference Time (ms)')
+        plt.xticks(rotation=45)
+        
+        # ML inference by location
+        plt.subplot(2, 2, 3)
+        sns.boxplot(data=perf_df, x='location', y='ml_inference_time_ms')
+        plt.title('ML Inference Time by Processing Location')
+        plt.xlabel('Processing Location')
+        plt.ylabel('ML Inference Time (ms)')
+        
+        # ML vs total latency correlation
+        plt.subplot(2, 2, 4)
+        perf_df['total_latency_ms'] = perf_df['latency'] * 1000
+        sns.scatterplot(data=perf_df, x='ml_inference_time_ms', y='total_latency_ms', 
+                       hue='location', alpha=0.6)
+        plt.title('ML Inference vs Total Latency')
+        plt.xlabel('ML Inference Time (ms)')
+        plt.ylabel('Total Latency (ms)')
+        
+        plt.tight_layout()
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"ML inference chart saved to: {output_path}")
+
     def plot_all(self):
         """Generate all visualization charts."""
         self.plot_reward_distribution()
         self.plot_latency_comparison()
         self.plot_epsilon_decay()
+        self.create_ml_inference_chart(os.path.join(self.output_dir, 'ml_inference_analysis.png'))
