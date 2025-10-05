@@ -1,0 +1,20 @@
+============================================================
+PERFORMANCE METRICS SUMMARY
+============================================================
+Generated: 2025-10-05 22:41:27
+
+DQN PERFORMANCE
+------------------------------
+Total Tasks: 315
+Average Latency: 258.02 ms
+P95 Latency: 393.31 ms
+Edge Processing: 54.3%
+Cloud Processing: 45.7%
+
+DRL PERFORMANCE
+------------------------------
+Total Tasks: 315
+Average Latency: 271.47 ms
+P95 Latency: 394.48 ms
+Edge Processing: 47.9%
+Cloud Processing: 52.1%

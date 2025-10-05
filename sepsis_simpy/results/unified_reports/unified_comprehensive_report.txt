@@ -1,0 +1,37 @@
+================================================================================
+UNIFIED DQN vs DRL COMPREHENSIVE ANALYSIS REPORT
+================================================================================
+Generated: 2025-10-05 22:41:27
+
+MEDICAL DECISION ACCURACY (STANDARDIZED)
+--------------------------------------------------
+DQN Medical Accuracy: 0.546 (172/315)
+DRL Medical Accuracy: 0.483 (152/315)
+Accuracy Difference: +0.063 (+6.3%)
+WINNER (Accuracy): DQN
+
+PERFORMANCE METRICS
+--------------------------------------------------
+DQN Average Latency: 258.02 ms
+DRL Average Latency: 271.47 ms
+Latency Difference: -13.45 ms
+WINNER (Latency): DQN
+
+SEPSIS CASE ROUTING
+--------------------------------------------------
+DQN Sepsis Cases: 7
+DQN Sepsis → Cloud: 4 (57.1%)
+DRL Sepsis Cases: 4
+DRL Sepsis → Cloud: 2 (50.0%)
+WINNER (Sepsis Routing): DQN
+
+PROCESSING DISTRIBUTION
+--------------------------------------------------
+DQN Edge/Cloud: 54.3% / 45.7%
+DRL Edge/Cloud: 47.9% / 52.1%
+
+OVERALL ASSESSMENT
+--------------------------------------------------
+✓ DQN demonstrates SUPERIOR medical decision accuracy
+✓ DQN achieves better latency performance
+✓ DQN routes more sepsis cases to cloud for expert care

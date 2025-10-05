@@ -1,0 +1,45 @@
+--- Performance Summary for Strategy: DQN ---
+
+## Latency Metrics ##
+- Overall Latency:
+    - Average: 258.02 ms
+    - Median:  176.53 ms
+    - 95th Percentile: 393.31 ms
+
+- Edge Latency:
+    - Average: 163.11 ms
+    - Median:  161.73 ms
+    - 95th Percentile: 177.98 ms
+    - Task Count: 171
+
+- Cloud Latency:
+    - Average: 370.74 ms
+    - Median:  368.37 ms
+    - 95th Percentile: 398.17 ms
+    - Task Count: 144
+
+## Throughput Metrics ##
+- Total Tasks Processed: 315
+- Overall Throughput: 2.10 tasks/sec
+
+## ML Inference Metrics ##
+- ML Inference Latency:
+    - Average: 51.33 ms
+    - Median:  63.71 ms
+    - 95th Percentile: 104.05 ms
+    - 99th Percentile: 161.22 ms
+    - Min: 5.47 ms
+    - Max: 206.15 ms
+    - Std Dev: 41.07 ms
+- Total ML Inferences: 315
+
+## Resource Utilization ##
+- Average CPU Utilization: 63.3%
+- Edge Processing: 171 tasks (54.3%)
+- Cloud Processing: 144 tasks (45.7%)
+
+## DQN Learning Metrics ##
+- Average Reward: 4.6438
+- Final Epsilon: 0.2072
+- Average Loss: 0.0858
+

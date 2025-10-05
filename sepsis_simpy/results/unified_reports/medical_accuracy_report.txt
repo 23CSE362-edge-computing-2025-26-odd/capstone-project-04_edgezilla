@@ -1,0 +1,32 @@
+============================================================
+MEDICAL ACCURACY ANALYSIS REPORT
+============================================================
+Generated: 2025-10-05 22:41:27
+
+SEPSIS RISK ASSESSMENT CRITERIA
+----------------------------------------
+• High Risk (≥0.6): Mandatory cloud processing
+• Moderate Risk (0.3-0.6): Cloud preferred, edge acceptable if overloaded
+• Low Risk (<0.3): Edge processing preferred for efficiency
+
+RISK FACTORS
+----------------------------------------
+• Heart Rate: Tachycardia (>110 bpm), Bradycardia (<50 bpm)
+• SpO2: Hypoxemia (<92%), Mild Hypoxemia (<95%)
+• Combined risk assessment with clinical thresholds
+
+MEDICAL PERFORMANCE COMPARISON
+----------------------------------------
+DQN:
+  Medical Accuracy: 54.6%
+  Total Decisions: 315
+  Correct Decisions: 172
+  Sepsis Cases Identified: 7
+  Sepsis Cases → Cloud: 4 (57.1%)
+
+DRL:
+  Medical Accuracy: 48.3%
+  Total Decisions: 315
+  Correct Decisions: 152
+  Sepsis Cases Identified: 4
+  Sepsis Cases → Cloud: 2 (50.0%)
