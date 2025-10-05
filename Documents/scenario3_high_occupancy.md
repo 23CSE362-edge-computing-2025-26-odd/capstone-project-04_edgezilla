@@ -1,38 +1,42 @@
-# Scenario 3: High Occupancy – 80% Wards Filled
+# Scenario 2: High Occupancy (80% Wards Active)
 
-## Scenario Description
-80% of wards are occupied. High data volume from multiple wearables increases the workload on edge nodes, requiring some tasks to be offloaded to the cloud.
+## Description
+This scenario simulates a hospital where 80% of wards are filled. Most patients have wearables generating health data. The workload is high but manageable at the edge with efficient task scheduling.
 
----
+## Resource Specifications
 
-## Specifications
+### Wearables
+- CPU Cores: 1  
+- MIPS: ~500  
+- RAM: 256 MB  
+- Bandwidth: 0.1–0.4 Mbps per device  
+- Task Capacity: ~2 tasks/sec  
 
-### Wearable Devices
-- 8 Raspberry Pi Zero W units per ward
-- Each handles ~2 patient streams
+### Edge Layer
+- CPU Cores: 4  
+- MIPS: ~2000 per core  
+- RAM: 3 GB  
+- Bandwidth: 10–80 Mbps (aggregated)  
+- Task Capacity: ~40 tasks/sec per core  
 
-### Edge Nodes
-- 5 Raspberry Pi 4 nodes
-- CPU: 4 Cores, 1.5 GHz
-- RAM: 4 GB
-- Tasks: ~30 preprocessing tasks per node
+### Cloud Layer
+- CPU Cores: 12  
+- MIPS: ~8000 per core  
+- RAM: 48 GB  
+- Bandwidth: 500 Mbps+  
+- Task Capacity: Elastic  
 
-### Cloud Node
-- CPU: 16 Cores, 2.5 GHz
-- RAM: 64 GB
-- Tasks: ~200 ML inference tasks concurrently
+## Baseline Comparison
+- Edge still manages the majority of tasks.  
+- Load balancing is necessary to prevent delays.  
+- Cloud usage reduces compared to Scenario 1.  
 
----
+## Evaluation Metrics
+- Latency distribution across edge and cloud.  
+- Task rejection/overflow ratio.  
+- Throughput vs available cores.  
 
-## Expected Performance Metrics
-| Metric                  | Value             |
-|-------------------------|-----------------|
-| Latency (ms)            | 180              |
-| Throughput (tasks/sec)  | 100              |
-| CPU Utilization (Edge)  | 70%              |
-| CPU Utilization (Cloud) | 50%              |
-| Energy Consumption (W)  | 20               |
-
----
-
-**Observation**: High occupancy pushes edge nodes near full utilization, increasing latency and energy consumption.
+## Visualization Plan
+- Stacked bar: Tasks handled by edge vs cloud.  
+- Line chart: Latency comparison with Scenario 1.  
+- Histogram: Bandwidth utilization.  
