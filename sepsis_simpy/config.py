@@ -1,7 +1,7 @@
 # ===================================================================
 # --- Simulation Basics ---
 # ===================================================================
-SIMULATION_DURATION = 60  # 1 minute simulation
+SIMULATION_DURATION = 60  # seconds
 NUM_WARDS = 3
 WEARABLES_PER_WARD = 5
 TOTAL_WEARABLES = NUM_WARDS * WEARABLES_PER_WARD
@@ -10,56 +10,50 @@ TOTAL_WEARABLES = NUM_WARDS * WEARABLES_PER_WARD
 # --- Device Compute Specifications (MIPS-equivalent realistic setup) ---
 # ===================================================================
 
-# Wearable (IoT node / sensor device)
-WEARABLE_CPU = 500           # MIPS
-WEARABLE_RAM = 256           # MB
+# Wearable (IoT node)
+WEARABLE_CPU = 500
+WEARABLE_RAM = 256  # MB
 
-# Edge Server (local gateway / ward-level edge)
-# Matches iFogSim: 4 PEs × 8000 MIPS = 32000 total
-EDGE_SERVER_CPU = 32000      # MIPS
-EDGE_SERVER_RAM = 32 * 1024  # 32 GB
+# Edge Server (local gateway)
+EDGE_SERVER_CPU = 32000       # MIPS
+EDGE_SERVER_RAM = 32 * 1024   # 32 GB
 
-# Cloud Datacenter (remote cloud)
-# Matches iFogSim: 8 PEs × 20000 MIPS = 160000 total
-CLOUD_DATACENTER_CPU = 160000  # MIPS
+# Cloud Datacenter (remote)
+CLOUD_DATACENTER_CPU = 160000 # MIPS
 CLOUD_DATACENTER_RAM = 64 * 1024  # 64 GB
 
 # ===================================================================
 # --- Network Latency Configuration (realistic RTTs) ---
 # ===================================================================
 
-# Local sensor reading
-LATENCY_WEARABLE_SENSOR = 6       # ms
-
-# Wireless hop from wearable to edge (Wi-Fi / BLE)
-LATENCY_WEARABLE_TO_EDGE = 5      # ms
-
-# Edge to Cloud latency (WAN / backbone RTT)
-# Adjusted for realistic ~73 ms overall E2E latency
-LATENCY_EDGE_TO_CLOUD = 60        # ms typical RTT
-# (If simulating slower internet, you can increase to 100 ms)
+LATENCY_WEARABLE_SENSOR = 8          # ms (sensor sampling + preproc)
+LATENCY_WEARABLE_TO_EDGE = 10        # ms (BLE/Wi-Fi hop)
+LATENCY_EDGE_TO_CLOUD = 300          # ms  <<< increased (realistic WAN + HTTP overhead)
 
 # ===================================================================
 # --- Task / Data Characteristics ---
 # ===================================================================
 
-SENSOR_DATA_GENERATION_INTERVAL = 7  # seconds between health data tuples
+SENSOR_DATA_GENERATION_INTERVAL = 7  # seconds
 
 HEALTH_DATA_PARAMS = {
-    "heart_rate": (60, 100),        # bpm
-    "blood_oxygen": (95, 100),      # %
-    "temperature": (36.5, 37.5),    # °C
-    "movement": (0, 1)              # 0=idle, 1=active
+    "heart_rate": (60, 100),
+    "blood_oxygen": (95, 100),
+    "temperature": (36.5, 37.5),
+    "movement": (0, 1)
 }
 
-# Typical lightweight processing (e.g., feature extraction/classification)
-# Task CPU requirements (MIPS)
-TASK_CPU_REQUIREMENT = 100  # MIPS per task
+# ===================================================================
+# --- Processing Requirements (adjusted for stronger contrast) ---
+# ===================================================================
 
-# ML Inference Time (seconds)
-# Realistic ML inference time without HTTP overhead
-ML_INFERENCE_TIME = 0.015  # 15ms for sepsis detection model → yields ~12 ms (edge) & ~73 ms (cloud)
-DATA_TUPLE_SIZE = 4  # KB (health packet size)
+# Edge: ~130–160 ms target
+#   32 000 MIPS × 0.14 s ≈ 4 480 M instructions
+# Cloud: ~330 ms total (180 ms network + ~150 ms inference)
+#   160 000 MIPS × 0.045 s ≈ 7 200 M instructions
+TASK_CPU_REQUIREMENT = 4500  # MIPS-equivalent per task
+
+DATA_TUPLE_SIZE = 4  # KB
 
 # ===================================================================
 # --- Power and Energy Models (W) ---
@@ -68,17 +62,15 @@ DATA_TUPLE_SIZE = 4  # KB (health packet size)
 POWER_WEARABLE_IDLE = 1.0
 POWER_WEARABLE_BUSY = 3.0
 
-POWER_EDGE_SERVER_IDLE = 100.0
-POWER_EDGE_SERVER_BUSY = 300.0
+POWER_EDGE_SERVER_IDLE = 120.0
+POWER_EDGE_SERVER_BUSY = 320.0
 
-POWER_CLOUD_INSTANCE_IDLE = 200.0
-POWER_CLOUD_INSTANCE_BUSY = 500.0
+POWER_CLOUD_INSTANCE_IDLE = 250.0
+POWER_CLOUD_INSTANCE_BUSY = 550.0
 
-# Energy cost for network transmission (J/MB)
-ENERGY_PER_MB_WIRELESS = 1.8   # Wearable → Edge
-ENERGY_PER_MB_WIRED = 0.5      # Edge → Cloud
-
-HEALTH_DATA_PACKET_SIZE_KB = 4.0  # For transmission energy computation
+ENERGY_PER_MB_WIRELESS = 1.8
+ENERGY_PER_MB_WIRED = 0.5
+HEALTH_DATA_PACKET_SIZE_KB = 4.0
 
 # ===================================================================
 # --- DQN / Learning Parameters (unchanged) ---

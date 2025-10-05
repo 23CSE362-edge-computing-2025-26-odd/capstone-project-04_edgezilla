@@ -1,8 +1,7 @@
-# run_experiments.py (Enhanced for Full Reporting with ML Server Integration)
+# run_experiments.py (Enhanced for Full Reporting with Local ML Inference)
 
 import time
 import os
-import requests
 import pandas as pd
 import argparse
 import config
@@ -14,20 +13,7 @@ from analysis.metrics_adapter import MetricsAdapter
 from analysis.metrics_exporter import MetricsExporter
 from application.data_generator import HealthDataGenerator, PatientStateModel
 
-def check_ml_server_status():
-    """Check if ML server is running and accessible."""
-    try:
-        response = requests.get("http://localhost:5002/health", timeout=3)
-        if response.status_code == 200:
-            server_info = response.json()
-            print(f"ML Server Status: {server_info.get('status', 'unknown')}")
-            print(f"   Model Trained: {server_info.get('model_trained', False)}")
-            return True
-    except requests.exceptions.RequestException:
-        print("ML Server: Not accessible at http://localhost:5002")
-        print("   Using fallback heuristic detection")
-        return False
-    return False
+
 
 def validate_csv_data():
     """Validate that CSV data is available and properly formatted."""
@@ -36,8 +22,8 @@ def validate_csv_data():
         if generator.data is not None:
             print(f"CSV Data: {len(generator.data)} records loaded from dataset")
             
-            # Check for required columns
-            required_cols = ['heart_rate', 'blood_oxygen', 'temperature', 'movement']
+            # Check for required columns (8 parameters for ML model)
+            required_cols = ['HR', 'O2Sat', 'Temp', 'SBP', 'MAP', 'DBP', 'Resp', 'EtCO2']
             missing_cols = [col for col in required_cols if col not in generator.data.columns]
             
             if missing_cols:
@@ -89,6 +75,28 @@ def run_single_experiment(strategy):
     visualizer = EnhancedVisualizer(converted_metrics, strategy_name=strategy)
     visualizer.plot_all()
     print(f"Generated all visualization charts for strategy: {strategy}")
+    
+    # 6. Display latency breakdown showing ML inference integration
+    performance_csv = f"results/data/{strategy}/performance.csv"
+    if os.path.exists(performance_csv):
+        import pandas as pd
+        df = pd.read_csv(performance_csv)
+        
+        avg_processing = df['latency_ms'].mean()
+        avg_ml_inference = df['ml_inference_time_ms'].mean()
+        avg_total = df['total_latency_ms'].mean()
+        
+        print(f"\n{'='*50}")
+        print(f"LATENCY BREAKDOWN - {strategy.upper()}")
+        print(f"{'='*50}")
+        print(f"Processing Latency:     {avg_processing:.2f} ms")
+        print(f"ML Inference Time:    + {avg_ml_inference:.2f} ms")
+        print(f"{'_'*35}")
+        print(f"Total Latency:        = {avg_total:.2f} ms")
+        print(f"\nTasks Processed: {len(df)}")
+        print(f"Total Energy: {final_metrics['energy']['total_system_energy_joules']:.2f}J")
+        print(f"{'='*50}")
+    
     print(f"{'='*20} FINISHED EXPERIMENT: {strategy.upper()} {'='*20}")
 
 def main():
@@ -116,7 +124,7 @@ def main():
     
     setup_logging(log_file="simulation_run.log")
     
-    print("Sepsis Detection System Simulation with ML Integration")
+    print("Sepsis Detection System Simulation with Local ML Inference")
     print("=" * 60)
     print(f"Selected strategies: {', '.join(args.strategies)}")
     print(f"Simulation duration: {args.duration} seconds")
@@ -124,14 +132,7 @@ def main():
     
     # Pre-experiment setup and validation
     print("\nSystem Validation:")
-    ml_available = check_ml_server_status()
     csv_available = validate_csv_data()
-    
-    if not ml_available:
-        print("\nTo enable ML server:")
-        print("   1. Run: python ml_server.py")
-        print("   2. Server will be available at http://localhost:5002")
-        print("   3. Rerun experiments for full ML integration")
     
     print(f"\nRunning {len(args.strategies)} strategies: {', '.join(args.strategies)}")
     print(f"Results will be saved to: {args.results_dir}/")
@@ -152,7 +153,6 @@ def main():
     print(f"Total Runtime: {end_time - start_time:.2f} seconds")
     print(f"Strategies Tested: {len(args.strategies)}")
     print(f"Results Location: {args.results_dir}/")
-    print(f"ML Integration: {'Active' if ml_available else 'Fallback Mode'}")
     print(f"Data Source: {'CSV Dataset' if csv_available else 'Synthetic Generation'}")
     print(f"Simulation Duration: {args.duration} seconds per strategy")
     

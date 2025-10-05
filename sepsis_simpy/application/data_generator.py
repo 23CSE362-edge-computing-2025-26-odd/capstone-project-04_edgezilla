@@ -44,8 +44,8 @@ class HealthDataGenerator:
             self.data = pd.read_csv(self.csv_file_path)
             print(f"Loaded {len(self.data)} records from {self.csv_file_path}")
             
-            # Validate required columns
-            required_columns = ['heart_rate', 'blood_oxygen', 'temperature', 'movement']
+            # Validate required columns for ML model
+            required_columns = ['HR', 'O2Sat', 'Temp', 'SBP', 'MAP', 'DBP', 'Resp', 'EtCO2']
             missing_columns = [col for col in required_columns if col not in self.data.columns]
             if missing_columns:
                 raise ValueError(f"Missing required columns in CSV: {missing_columns}")
@@ -59,37 +59,44 @@ class HealthDataGenerator:
             print("Falling back to synthetic data generation...")
             self.data = None
     
-    def generate_heart_rate(self):
+    def generate_vitals_data(self):
+        """Generate all vital signs data from CSV or synthetic fallback."""
         if self.data is not None and len(self.data) > 0:
             row = self.data.iloc[self.current_index % len(self.data)]
-            return int(row['heart_rate'])
-        return int(np.random.normal(80, 15))  # Fallback
-
-    def generate_blood_oxygen(self):
-        if self.data is not None and len(self.data) > 0:
-            row = self.data.iloc[self.current_index % len(self.data)]
-            return float(row['blood_oxygen'])
-        return round(np.random.uniform(94.0, 99.5), 1)  # Fallback
-
-    def generate_temperature(self):
-        if self.data is not None and len(self.data) > 0:
-            row = self.data.iloc[self.current_index % len(self.data)]
-            return float(row['temperature'])
-        return round(np.random.normal(37.0, 0.5), 1)  # Fallback
-
-    def generate_movement_data(self):
-        if self.data is not None and len(self.data) > 0:
-            row = self.data.iloc[self.current_index % len(self.data)]
-            return int(row['movement'])
-        return random.choice([0, 1])  # Fallback
+            return {
+                'HR': int(row['HR']),
+                'O2Sat': float(row['O2Sat']),
+                'Temp': float(row['Temp']),
+                'SBP': int(row['SBP']),
+                'MAP': int(row['MAP']),
+                'DBP': int(row['DBP']),
+                'Resp': int(row['Resp']),
+                'EtCO2': int(row['EtCO2'])
+            }
+        else:
+            # Fallback synthetic generation
+            return {
+                'HR': int(np.random.normal(80, 15)),
+                'O2Sat': round(np.random.uniform(94.0, 99.5), 1),
+                'Temp': round(np.random.normal(37.0, 0.5), 1),
+                'SBP': int(np.random.normal(120, 20)),
+                'MAP': int(np.random.normal(85, 15)),
+                'DBP': int(np.random.normal(75, 10)),
+                'Resp': int(np.random.normal(16, 4)),
+                'EtCO2': int(np.random.normal(35, 5))
+            }
 
     def generate_all(self):
         """Generate a complete set of health parameters and advance the index."""
+        vitals = self.generate_vitals_data()
+        
+        # Add legacy field mapping for backward compatibility
         result = {
-            "heart_rate": self.generate_heart_rate(),
-            "blood_oxygen": self.generate_blood_oxygen(),
-            "temperature": self.generate_temperature(),
-            "movement": self.generate_movement_data()
+            **vitals,
+            "heart_rate": vitals['HR'],
+            "blood_oxygen": vitals['O2Sat'],
+            "temperature": vitals['Temp'],
+            "movement": random.choice([0, 1])  # Keep for compatibility
         }
         
         # Advance to next row for subsequent calls
@@ -104,19 +111,22 @@ class HealthDataGenerator:
         cls._initialized = False
 
 class PatientStateModel:
-    """Makes API calls to ML server for sepsis detection."""
-    def __init__(self, ml_server_url="http://localhost:5002"):
+    """Uses local ML model for sepsis detection instead of HTTP requests."""
+    def __init__(self, device_type='edge'):
         """
-        Initialize the patient state model.
+        Initialize the patient state model with local ML inference.
         
         Args:
-            ml_server_url: URL of the ML server for sepsis detection
+            device_type: 'edge' or 'cloud' - affects inference speed
         """
-        self.ml_server_url = ml_server_url
+        from .local_ml_inference import LocalMLInference
+        
+        self.device_type = device_type
+        self.ml_engine = LocalMLInference(device_type=device_type)
         self.states = ['normal', 'suspicious', 'critical_sepsis']
         self.current_state = 'normal'
         self.last_prediction = 0
-        self.last_inference_time_ms = 15.0  # Default fallback time
+        self.last_inference_time_ms = 0.0
         
     def update_patient_state(self, health_data=None):
         """
@@ -148,7 +158,7 @@ class PatientStateModel:
 
     def calculate_sepsis_risk(self, data):
         """
-        Make API call to ML server for sepsis detection.
+        Use local ML model for sepsis detection with realistic inference timing.
         
         Args:
             data: Dictionary containing health parameters
@@ -156,54 +166,36 @@ class PatientStateModel:
         Returns:
             0 or 1 (no sepsis / sepsis detected)
         """
-        import time
-        start_time = time.perf_counter()
-        
         try:
-            # Prepare the payload for the ML API
-            payload = {
-                "heart_rate": data.get("heart_rate", 80),
-                "blood_oxygen": data.get("blood_oxygen", 98.0),
-                "temperature": data.get("temperature", 37.0),
-                "movement": data.get("movement", 0)
+            # Prepare patient data for ML model (8 parameters)
+            patient_vitals = {
+                'HR': data.get('HR', data.get('heart_rate', 80)),
+                'O2Sat': data.get('O2Sat', data.get('blood_oxygen', 98.0)),
+                'Temp': data.get('Temp', data.get('temperature', 37.0)),
+                'SBP': data.get('SBP', 120),  # Default values if not available
+                'MAP': data.get('MAP', 85),
+                'DBP': data.get('DBP', 75),
+                'Resp': data.get('Resp', 16),
+                'EtCO2': data.get('EtCO2', 35)
             }
             
-            # Make API call to ML server (fast timeout for speed)
-            response = requests.post(
-                f"{self.ml_server_url}/predict_sepsis",
-                json=payload,
-                timeout=0.5  # 0.5 second timeout (fast mode)
-            )
+            # Perform local ML inference with timing
+            prediction, inference_time = self.ml_engine.predict_sepsis(patient_vitals)
             
-            if response.status_code == 200:
-                result = response.json()
-                prediction = int(result.get("prediction", 0))
-                self.last_prediction = prediction
-                
-                # Store actual ML inference time
-                inference_time = time.perf_counter() - start_time
-                self.last_inference_time_ms = inference_time * 1000
-                
-                return prediction
-            else:
-                print(f"ML API error: {response.status_code} - {response.text}")
-                return self.last_prediction  # Return last known prediction
-                
-        except requests.exceptions.RequestException as e:
-            print(f"Failed to connect to ML server: {e}")
-            # Fallback to simple heuristic if ML server is unavailable
-            inference_time = time.perf_counter() - start_time
+            # Store inference time for metrics
             self.last_inference_time_ms = inference_time * 1000
-            return self._fallback_sepsis_detection(data)
+            self.last_prediction = prediction
+            
+            return prediction
+                
         except Exception as e:
-            print(f"Error in sepsis prediction: {e}")
-            inference_time = time.perf_counter() - start_time
-            self.last_inference_time_ms = inference_time * 1000
-            return self.last_prediction
+            print(f"Local ML inference error: {e}")
+            # Fallback to simple heuristic
+            return self._fallback_sepsis_detection(data)
     
     def _fallback_sepsis_detection(self, data):
         """
-        Fallback sepsis detection using simple heuristics when ML server is unavailable.
+        Fallback sepsis detection using simple heuristics when ML model is unavailable.
         
         Args:
             data: Dictionary containing health parameters
@@ -211,19 +203,35 @@ class PatientStateModel:
         Returns:
             0 or 1 (no sepsis / sepsis detected)
         """
-        # Simple heuristic: high heart rate, low oxygen, high temperature
-        heart_rate = data.get("heart_rate", 80)
-        blood_oxygen = data.get("blood_oxygen", 98.0)
-        temperature = data.get("temperature", 37.0)
+        # Extract parameters with backward compatibility
+        hr = data.get('HR', data.get('heart_rate', 80))
+        o2_sat = data.get('O2Sat', data.get('blood_oxygen', 98.0))
+        temp = data.get('Temp', data.get('temperature', 37.0))
+        resp = data.get('Resp', 16)
+        sbp = data.get('SBP', 120)
         
-        # Basic sepsis indicators
+        # Enhanced sepsis indicators using SIRS criteria
         sepsis_score = 0
-        if heart_rate > 90:  # Tachycardia
-            sepsis_score += 1
-        if blood_oxygen < 95:  # Low oxygen saturation
-            sepsis_score += 1
-        if temperature > 38.0 or temperature < 36.0:  # Fever or hypothermia
+        
+        # Temperature: fever or hypothermia
+        if temp > 38.0 or temp < 36.0:
             sepsis_score += 1
             
-        # Return 1 if 2 or more indicators present
+        # Heart rate: tachycardia
+        if hr > 90:
+            sepsis_score += 1
+            
+        # Respiratory rate: tachypnea
+        if resp > 20:
+            sepsis_score += 1
+            
+        # Oxygen saturation: hypoxemia
+        if o2_sat < 95:
+            sepsis_score += 1
+            
+        # Blood pressure: hypotension
+        if sbp < 90:
+            sepsis_score += 1
+            
+        # Return 1 if 2 or more SIRS criteria present
         return 1 if sepsis_score >= 2 else 0

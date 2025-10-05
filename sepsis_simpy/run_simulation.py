@@ -6,6 +6,7 @@ import logging
 import time
 import argparse
 import config
+import os
 
 def main():
     """Main function to run the simulation."""
@@ -55,10 +56,31 @@ def main():
     visualizer.plot_all()
     print(f"Generated all visualization charts for strategy: {args.strategy}")
     
-    print(f"\nPerformance Summary:")
-    print(f"   Tasks Processed: {final_metrics['throughput']['completed_tasks']['task_processed']}")
-    print(f"   Average Latency: {final_metrics['latency']['end_to_end_latency']['mean_s']*1000:.2f}ms")
-    print(f"   Total Energy: {final_metrics['energy']['total_system_energy_joules']:.2f}J")
+    # 4. Display latency breakdown showing ML inference integration
+    performance_csv = f"results/data/{args.strategy}/performance.csv"
+    if os.path.exists(performance_csv):
+        import pandas as pd
+        df = pd.read_csv(performance_csv)
+        
+        avg_processing = df['latency_ms'].mean()
+        avg_ml_inference = df['ml_inference_time_ms'].mean()
+        avg_total = df['total_latency_ms'].mean()
+        
+        print(f"\n{'='*50}")
+        print(f"LATENCY BREAKDOWN - {args.strategy.upper()}")
+        print(f"{'='*50}")
+        print(f"Processing Latency:     {avg_processing:.2f} ms")
+        print(f"ML Inference Time:    + {avg_ml_inference:.2f} ms")
+        print(f"{'_'*35}")
+        print(f"Total Latency:        = {avg_total:.2f} ms")
+        print(f"\nTasks Processed: {len(df)}")
+        print(f"Total Energy: {final_metrics['energy']['total_system_energy_joules']:.2f}J")
+        print(f"{'='*50}")
+    else:
+        print(f"\nQuick Summary:")
+        print(f"   Tasks Processed: {final_metrics['throughput']['completed_tasks']['task_processed']}")
+        print(f"   Average Latency: {final_metrics['latency']['end_to_end_latency']['mean_s']*1000:.2f}ms")
+        print(f"   Total Energy: {final_metrics['energy']['total_system_energy_joules']:.2f}J")
     print(f"\nAll outputs saved to: results/data/{args.strategy}/ and results/charts/{args.strategy}/")
     
     end_time = time.time()

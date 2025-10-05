@@ -28,8 +28,9 @@ class SepsisSimulation:
         # --- Logic for handling different strategies ---
         self.server_manager = None
         self.state_tracker = None
-        # Initialize ML-based sepsis detection model
-        self.patient_state_model = PatientStateModel()
+        # Initialize ML-based sepsis detection models for edge and cloud
+        self.edge_ml_model = PatientStateModel(device_type='edge')
+        self.cloud_ml_model = PatientStateModel(device_type='cloud')
         
         if self.strategy == 'dqn':
             self.server_manager = ServerManager(state_size=5, action_size=2)
@@ -56,19 +57,20 @@ class SepsisSimulation:
             health_data['ward_id'] = wearable.ward_id
             self.monitor.energy.record_network_energy('wireless', config.HEALTH_DATA_PACKET_SIZE_KB)
 
-            # Perform sepsis detection (ML inference will be added to processing time)
-            sepsis_prediction = self.patient_state_model.calculate_sepsis_risk(health_data)
-            patient_state = self.patient_state_model.update_patient_state(health_data)
-            health_data['sepsis_prediction'] = sepsis_prediction
-            health_data['patient_state'] = patient_state
-            
-            print(f"Time {self.env.now:.2f}: Wearable-{wearable.device_id} - Sepsis Risk: {sepsis_prediction}, State: {patient_state}")
-
             action, current_state = self._make_offloading_decision(health_data)
             if self.strategy == 'dqn':
                 self.monitor.accuracy.evaluate_decision(current_state, action)
             
-            processing_duration = yield self.env.process(self._execute_task(health_data, action))
+            # Execute task with ML inference (sepsis detection happens during processing)
+            processing_duration, sepsis_result = yield self.env.process(self._execute_task(health_data, action))
+            
+            # Extract results from task execution
+            sepsis_prediction = sepsis_result['sepsis_prediction']
+            patient_state = sepsis_result['patient_state']
+            health_data['sepsis_prediction'] = sepsis_prediction
+            health_data['patient_state'] = patient_state
+            
+            print(f"Time {self.env.now:.2f}: Wearable-{wearable.device_id} - Sepsis Risk: {sepsis_prediction}, State: {patient_state}")
             
             # Log sepsis detection results
             if health_data.get('sepsis_prediction', 0) == 1:
@@ -109,11 +111,10 @@ class SepsisSimulation:
         return action, current_state
 
     def _execute_task(self, data, action):
-        """Uses env.now to correctly measure simulation queue times."""
+        """Execute task with ML inference on the appropriate device."""
         if action == 0: # Process on Edge
             edge = self.edge_servers[data['ward_id']]
-            # Add ML inference time to processing time
-            proc_time = (config.TASK_CPU_REQUIREMENT / edge.cpu_capacity) + config.ML_INFERENCE_TIME
+            proc_time = config.TASK_CPU_REQUIREMENT / edge.cpu_capacity
             
             queue_arrival_time = self.env.now
             with edge.cpu.request() as req:
@@ -122,12 +123,26 @@ class SepsisSimulation:
                 queue_wait = self.env.now - queue_arrival_time
                 self.monitor.sim_latencies['edge_queue_wait'].append(queue_wait)
                 
+                # Perform ML inference during edge processing
+                sepsis_prediction = self.edge_ml_model.calculate_sepsis_risk(data)
+                patient_state = self.edge_ml_model.update_patient_state(data)
+                ml_inference_time = self.edge_ml_model.last_inference_time_ms / 1000.0  # Convert to seconds
+                
+                # Record ML inference latency for edge
+                self.monitor.realtime_latency.start('edge_ml_inference_latency', data['device_id'])
+                yield self.env.timeout(ml_inference_time)  # Simulate ML inference time
+                self.monitor.realtime_latency.end('edge_ml_inference_latency', data['device_id'])
+                
+                # Continue with regular processing (ML inference time already included above)
                 yield self.env.timeout(proc_time)
             
             processing_duration = self.env.now - queue_arrival_time
-            # Energy is based on processing time only, not queue time
             self.monitor.energy.record_device_energy('edge', 'busy', proc_time) 
-            return processing_duration
+            
+            return processing_duration, {
+                'sepsis_prediction': sepsis_prediction,
+                'patient_state': patient_state
+            }
         
         else: # Offload to Cloud
             # Simulate network delay
@@ -135,8 +150,7 @@ class SepsisSimulation:
             self.monitor.energy.record_network_energy('wired', config.HEALTH_DATA_PACKET_SIZE_KB)
 
             cloud = self.cloud
-            # Add ML inference time to processing time
-            proc_time = ((config.TASK_CPU_REQUIREMENT * 2) / cloud.cpu_capacity) + config.ML_INFERENCE_TIME
+            proc_time = (config.TASK_CPU_REQUIREMENT * 2) / cloud.cpu_capacity
             
             queue_arrival_time = self.env.now
             with cloud.resource_pools.request() as req:
@@ -145,11 +159,26 @@ class SepsisSimulation:
                 queue_wait = self.env.now - queue_arrival_time
                 self.monitor.sim_latencies['cloud_queue_wait'].append(queue_wait)
                 
+                # Perform ML inference during cloud processing
+                sepsis_prediction = self.cloud_ml_model.calculate_sepsis_risk(data)
+                patient_state = self.cloud_ml_model.update_patient_state(data)
+                ml_inference_time = self.cloud_ml_model.last_inference_time_ms / 1000.0  # Convert to seconds
+                
+                # Record ML inference latency for cloud
+                self.monitor.realtime_latency.start('cloud_ml_inference_latency', data['device_id'])
+                yield self.env.timeout(ml_inference_time)  # Simulate ML inference time
+                self.monitor.realtime_latency.end('cloud_ml_inference_latency', data['device_id'])
+                
+                # Continue with regular processing (ML inference time already included above)
                 yield self.env.timeout(proc_time)
 
             processing_duration = self.env.now - queue_arrival_time
             self.monitor.energy.record_device_energy('cloud', 'busy', proc_time)
-            return processing_duration
+            
+            return processing_duration, {
+                'sepsis_prediction': sepsis_prediction,
+                'patient_state': patient_state
+            }
 
     def run(self):
         """Runs the simulation and returns final aggregated metrics."""
