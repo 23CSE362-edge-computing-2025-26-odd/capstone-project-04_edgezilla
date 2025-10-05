@@ -105,7 +105,7 @@ class MetricsAdapter:
                 # Determine location for ML inference timing lookup
                 location = 'edge' if is_edge else 'cloud'
                 
-                # Use ACTUAL ML inference timing from LocalMLInference instead of synthetic values
+                # Use ACTUAL ML inference timing from LocalMLInferencelMLInference instead of synthetic values
                 ml_inference_time = MetricsAdapter._get_actual_ml_inference_time(location, i)
                 
                 # Calculate total latency including ML inference
@@ -233,7 +233,64 @@ class MetricsAdapter:
             })
         
         metrics_dict['decisions'] = pd.DataFrame(decisions_data)
-
+        
+        # Add DQN-specific accuracy metrics if available
+        if strategy_name.lower() == 'dqn' and 'accuracy' in raw_metrics:
+            dqn_accuracy_data = raw_metrics['accuracy']
+            
+            # Convert DQN decision accuracy log
+            if 'decision_log' in dqn_accuracy_data:
+                dqn_decisions_data = []
+                for i, entry in enumerate(dqn_accuracy_data['decision_log']):
+                    dqn_decisions_data.append({
+                        'timestamp': timestamps[i % len(timestamps)] if timestamps else datetime.now(),
+                        'agent_id': 'dqn_agent',
+                        'dqn_action': entry.get('dqn_action', 0),
+                        'optimal_action': entry.get('optimal_action', 0),
+                        'correct': entry.get('correct', False),
+                        'reason': entry.get('reason', '')
+                    })
+                
+                metrics_dict['dqn_decisions'] = pd.DataFrame(dqn_decisions_data)
+        
+        # DRL now uses single-edge agents only (no federated coordination)
+        
+        # Add Single-Edge DRL accuracy metrics if available
+        if strategy_name.lower() == 'drl' and 'single_edge_drl_accuracy' in raw_metrics:
+            single_edge_data = raw_metrics['single_edge_drl_accuracy']
+            
+            # Convert Single-Edge DRL decision accuracy log
+            if 'decision_log' in single_edge_data:
+                single_edge_decisions_data = []
+                for entry in single_edge_data['decision_log']:
+                    single_edge_decisions_data.append({
+                        'timestamp': datetime.now(),  # Use current time as placeholder
+                        'agent_id': 'single_edge_agent',
+                        'single_edge_action': entry.get('single_edge_action', 0),
+                        'optimal_action': entry.get('optimal_action', 0),
+                        'correct': entry.get('correct', False),
+                        'reason': entry.get('reason', ''),
+                        'efficiency_score': entry.get('efficiency_score', 0.5),
+                        'cpu_utilization': entry.get('cpu_utilization', 0.5),
+                        'queue_length': entry.get('queue_length', 0),
+                        'task_priority': entry.get('task_priority', 0.5)
+                    })
+                
+                metrics_dict['single_edge_decisions'] = pd.DataFrame(single_edge_decisions_data)
+            
+            # Convert performance metrics if available
+            if 'performance_metrics' in single_edge_data:
+                perf_data = []
+                for entry in single_edge_data['performance_metrics']:
+                    perf_data.append({
+                        'timestamp': datetime.now(),
+                        'latency': entry.get('latency', 0),
+                        'cpu_util': entry.get('cpu_util', 0.5),
+                        'queue_length': entry.get('queue_length', 0),
+                        'efficiency': entry.get('efficiency', 0.5)
+                    })
+                
+                metrics_dict['single_edge_performance'] = pd.DataFrame(perf_data)
         
         return metrics_dict
     

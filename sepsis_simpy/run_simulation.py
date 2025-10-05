@@ -13,7 +13,7 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Run Sepsis Detection Simulation')
     parser.add_argument('--strategy', type=str, default='dqn', 
-                       choices=['dqn', 'always_edge', 'always_cloud', 'random'],
+                       choices=['dqn', 'drl', 'always_edge', 'always_cloud', 'random'],
                        help='Strategy to use for task offloading (default: dqn)')
     parser.add_argument('--duration', type=int, default=config.SIMULATION_DURATION,
                        help=f'Simulation duration in seconds (default: {config.SIMULATION_DURATION})')

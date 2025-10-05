@@ -103,7 +103,7 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Run Sepsis Detection Simulation Experiments')
     parser.add_argument('--strategies', nargs='+', default=config.EXPERIMENT_STRATEGIES,
-                       choices=['dqn', 'always_edge', 'always_cloud', 'random'],
+                       choices=['dqn', 'drl', 'always_edge', 'always_cloud', 'random'],
                        help='Strategies to test (default: all strategies)')
     parser.add_argument('--duration', type=int, default=config.SIMULATION_DURATION,
                        help=f'Simulation duration in seconds (default: {config.SIMULATION_DURATION})')

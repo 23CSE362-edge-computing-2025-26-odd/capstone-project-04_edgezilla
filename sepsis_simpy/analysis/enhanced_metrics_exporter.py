@@ -45,6 +45,44 @@ class EnhancedMetricsExporter:
                 'final_epsilon': learning_df['epsilon'].iloc[-1],
                 'avg_loss': learning_df['loss'].mean()
             })
+        
+        # Add DQN accuracy metrics if available
+        if 'dqn_decisions' in self.metrics:
+            dqn_df = self.metrics['dqn_decisions']
+            if not dqn_df.empty:
+                summary_data.update({
+                    'dqn_accuracy_rate': dqn_df['correct'].mean(),
+                    'dqn_total_decisions': len(dqn_df)
+                })
+            
+        # Add DRL accuracy metrics if available
+        if 'drl_decisions' in self.metrics:
+            drl_df = self.metrics['drl_decisions']
+            if not drl_df.empty:
+                summary_data.update({
+                    'drl_accuracy_rate': drl_df['correct'].mean(),
+                    'drl_total_decisions': len(drl_df),
+                    'avg_coordination_quality': drl_df['coordination_quality'].mean()
+                })
+        
+        # Add Single-Edge DRL accuracy metrics if available
+        if 'single_edge_decisions' in self.metrics:
+            single_edge_df = self.metrics['single_edge_decisions']
+            if not single_edge_df.empty:
+                summary_data.update({
+                    'single_edge_accuracy_rate': single_edge_df['correct'].mean(),
+                    'single_edge_total_decisions': len(single_edge_df),
+                    'avg_efficiency_score': single_edge_df['efficiency_score'].mean(),
+                    'avg_single_edge_cpu_util': single_edge_df['cpu_utilization'].mean()
+                })
+                
+        if 'drl_coordination' in self.metrics:
+            coord_df = self.metrics['drl_coordination'] 
+            if not coord_df.empty:
+                summary_data.update({
+                    'avg_offload_bias': coord_df['offload_bias'].mean(),
+                    'avg_priority_boost': coord_df['priority_boost'].mean()
+                })
             
         # Create summary DataFrame and export
         summary_df = pd.DataFrame([summary_data])
@@ -96,9 +134,38 @@ class EnhancedMetricsExporter:
         decisions_df.reset_index().to_csv(os.path.join(self.output_dir, 'decisions.csv'), index=False)
         window_stats.to_csv(os.path.join(self.output_dir, 'decisions_window_stats.csv'), index=False)
         
+    def export_dqn_metrics(self):
+        """Export DQN-specific accuracy metrics."""
+        if 'dqn_decisions' in self.metrics:
+            dqn_decisions_df = self.metrics['dqn_decisions']
+            dqn_decisions_df.to_csv(os.path.join(self.output_dir, 'dqn_decisions.csv'), index=False)
+    
+    def export_single_edge_drl_metrics(self):
+        """Export Single-Edge DRL accuracy and performance metrics."""
+        if 'single_edge_decisions' in self.metrics:
+            single_edge_df = self.metrics['single_edge_decisions']
+            single_edge_df.to_csv(os.path.join(self.output_dir, 'single_edge_decisions.csv'), index=False)
+            
+        if 'single_edge_performance' in self.metrics:
+            perf_df = self.metrics['single_edge_performance']
+            perf_df.to_csv(os.path.join(self.output_dir, 'single_edge_performance.csv'), index=False)
+    
+    def export_drl_metrics(self):
+        """Export DRL-specific accuracy and coordination metrics."""
+        if 'drl_decisions' in self.metrics:
+            drl_decisions_df = self.metrics['drl_decisions']
+            drl_decisions_df.to_csv(os.path.join(self.output_dir, 'drl_decisions.csv'), index=False)
+            
+        if 'drl_coordination' in self.metrics:
+            coord_df = self.metrics['drl_coordination']
+            coord_df.to_csv(os.path.join(self.output_dir, 'drl_coordination.csv'), index=False)
+    
     def export_all(self):
         """Export all metrics to their respective CSV files."""
         self.export_summary_report()
         self.export_performance_metrics()
         self.export_learning_metrics()
         self.export_decision_metrics()
+        self.export_dqn_metrics()
+        self.export_drl_metrics()
+        self.export_single_edge_drl_metrics()

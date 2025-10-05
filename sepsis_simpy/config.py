@@ -73,18 +73,70 @@ ENERGY_PER_MB_WIRED = 0.5
 HEALTH_DATA_PACKET_SIZE_KB = 4.0
 
 # ===================================================================
-# --- DQN / Learning Parameters (unchanged) ---
+# --- Enhanced DQN / Learning Parameters ---
 # ===================================================================
 
-LEARNING_RATE = 2e-4
-GAMMA = 0.99
+# Core learning parameters - enhanced for deeper networks
+LEARNING_RATE = 1e-4
+GAMMA = 0.995
+BATCH_SIZE = 256  # Mega-batches for ultra-aggressive learning
+MEMORY_CAPACITY = 50000
+
+# Advanced epsilon strategy with warmup
 EPSILON_START = 1.0
 EPSILON_END = 0.01
-EPSILON_DECAY = 0.995
-BATCH_SIZE = 128
-MEMORY_CAPACITY = 20000
-DQN_TRAINING_INTERVAL = 25
-DQN_TARGET_UPDATE_INTERVAL = 100
+EPSILON_DECAY = 0.9995  # Slower decay for better exploration
+EPSILON_WARMUP_STEPS = 1000
+
+# Mega-Enhanced Training Configuration
+DQN_TRAINING_INTERVAL = 1   # Train after every single experience for maximum learning
+DQN_TARGET_UPDATE_INTERVAL = 500  # Reduced frequency for ultra-stability
+
+# Ultra-Advanced Rainbow DQN Features - All cutting-edge techniques enabled
+DQN_DOUBLE_DQN = True
+DQN_DUELING = True
+DQN_PRIORITIZED_REPLAY = True
+DQN_SOFT_UPDATE_TAU = 0.001  # Ultra-soft updates for maximum stability
+DQN_GRADIENT_CLIP = 0.5      # Tighter gradient clipping
+
+# Mega-Deep Network Architecture (2,000,000+ parameters)
+DQN_HIDDEN_LAYERS = [2048, 1024, 512, 256, 128, 64]  # Mega-deep architecture
+DQN_USE_BATCH_NORM = False   # Layer norm is better for advanced networks
+DQN_USE_LAYER_NORM = True
+DQN_DROPOUT_RATE = 0.1       # Reduced dropout for deeper networks
+DQN_ACTIVATION = 'SiLU'      # Swish activation (better than ReLU)
+
+# Rainbow DQN Advanced Features
+DQN_USE_NOISY_NETWORKS = True     # Automatic exploration
+DQN_USE_DISTRIBUTIONAL_RL = True  # C51 distributional learning
+DQN_USE_MULTI_STEP = True         # Multi-step learning
+DQN_USE_ATTENTION = True          # Self-attention mechanism
+DQN_N_STEP = 5                    # Multi-step learning horizon
+DQN_NUM_ATOMS = 51               # Distributional RL atoms
+DQN_V_MIN = -200                 # Value distribution minimum
+DQN_V_MAX = 200                  # Value distribution maximum
+
+# Mega-Advanced Training Parameters
+DQN_LEARNING_RATE = 1e-3  # 3x higher learning rate for mega-aggressive learning
+DQN_WEIGHT_DECAY = 1e-4
+DQN_OPTIMIZER_BETAS = (0.9, 0.999)
+DQN_OPTIMIZER_EPS = 1e-4
+DQN_USE_COSINE_ANNEALING = True
+DQN_SCHEDULER_T0 = 1000
+DQN_SCHEDULER_TMULT = 2
+DQN_SCHEDULER_ETA_MIN = 1e-6
+
+# Ultra-Prioritized Experience Replay
+PER_ALPHA = 0.6              # Priority exponent
+PER_BETA = 0.4               # Importance sampling weight
+PER_BETA_INCREMENT = 0.001   # Beta annealing rate
+PER_MIN_PRIORITY = 1e-6      # Minimum priority
+
+# Advanced Learning Features
+DQN_USE_CURRICULUM = True         # Curriculum learning
+DQN_CURRICULUM_FACTOR = 1.0       # Curriculum weighting
+DQN_DIFFICULTY_THRESHOLD = 0.8    # Difficulty adaptation threshold
+DQN_USE_HINDSIGHT = True          # Hindsight Experience Replay
 
 # ===================================================================
 # --- Offloading / Accuracy Thresholds ---
@@ -97,7 +149,22 @@ QUEUE_LENGTH_THRESHOLD_FOR_OFFLOAD = 10
 # --- Experiment / Output Configuration ---
 # ===================================================================
 
-EXPERIMENT_STRATEGIES = ['dqn', 'always_edge', 'always_cloud', 'random']
+EXPERIMENT_STRATEGIES = ['dqn', 'drl', 'always_edge', 'always_cloud', 'random']
+
+# ===================================================================
+# --- DRL (Deep Reinforcement Learning) Parameters ---
+# ===================================================================
+
+# Actor-Critic specific parameters
+DRL_LEARNING_RATE = 3e-4
+DRL_ENTROPY_COEFFICIENT = 0.01
+DRL_VALUE_LOSS_COEFFICIENT = 0.5
+DRL_COORDINATION_INTERVAL = 10
+
+# Policy gradient parameters
+DRL_ADVANTAGE_NORMALIZATION = True
+DRL_GAE_LAMBDA = 0.95
+DRL_GRADIENT_CLIP = 0.5
 
 RESULTS_DIR = 'results'
 CHART_OUTPUT_DIR = f'{RESULTS_DIR}/charts'
