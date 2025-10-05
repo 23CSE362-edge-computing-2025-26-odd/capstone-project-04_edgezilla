@@ -20,14 +20,7 @@ out/
 Thumbs.db
 
 output/
-results/
-*.csv
 *.json
-*.txt
 
-/Simulation/SepsisCFRL/src/org/fog/test/perfeval/**/*
-/Simulation/SepsisCFRL/src/org/fog/test/placement/**/*
-/Simulation/SepsisCFRL/src/org/fog/test/research/**/*
-/Simulation/SepsisCFRL/src/org/fog/test/tutorial/**/*
 
-!/Simulation/SepsisCFRL/src/org/fog/test/sepsisdetection/**
+__pycache__

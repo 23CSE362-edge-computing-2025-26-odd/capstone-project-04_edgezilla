@@ -1,0 +1,43 @@
+--- Performance Summary for Strategy: DRL ---
+
+## Latency Metrics ##
+- Overall Latency:
+    - Average: 271.47 ms
+    - Median:  348.52 ms
+    - 95th Percentile: 394.48 ms
+
+- Edge Latency:
+    - Average: 162.90 ms
+    - Median:  161.31 ms
+    - 95th Percentile: 178.09 ms
+    - Task Count: 151
+
+- Cloud Latency:
+    - Average: 371.44 ms
+    - Median:  369.16 ms
+    - 95th Percentile: 397.07 ms
+    - Task Count: 164
+
+## Throughput Metrics ##
+- Total Tasks Processed: 315
+- Overall Throughput: 2.10 tasks/sec
+
+## ML Inference Metrics ##
+- ML Inference Latency:
+    - Average: 44.01 ms
+    - Median:  12.92 ms
+    - 95th Percentile: 96.77 ms
+    - 99th Percentile: 108.15 ms
+    - Min: 4.53 ms
+    - Max: 202.93 ms
+    - Std Dev: 37.67 ms
+- Total ML Inferences: 315
+
+## Resource Utilization ##
+- Average CPU Utilization: 57.2%
+- Edge Processing: 151 tasks (47.9%)
+- Cloud Processing: 164 tasks (52.1%)
+
+## DQN Decision Accuracy ##
+- Not applicable for this strategy.
+
