@@ -32,3 +32,18 @@ Dueling DQN could improve upon vanilla DQN because:
 In resource allocation, the value of being in a particular state (having certain resources available) might be more important than the specific action taken
 Better generalization across similar states
 
+
+
+Considerations
+However, before switching:
+
+DQN is well-justified for your discrete action space (resource allocation decisions)
+Your contribution is primarily the concurrent federated learning framework, not the specific RL algorithm
+Changing the base RL algorithm would require re-running all experiments for fair comparison
+
+If you want to explore alternatives, I'd suggest:
+
+Start with Dueling DQN (minimal change, likely improvement)
+Then consider PPO if you want to explore policy-based methods
+Keep DQN as a baseline for comparison
+
