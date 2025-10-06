@@ -17,3 +17,18 @@ Rainbow DQN: Combines multiple DQN improvements (could be overkill but worth con
 
 Entropy-regularized, more robust exploration
 Handles continuous actions naturally
+
+
+Why Consider Alternatives?
+For your specific use case:
+PPO or A3C might be particularly suitable because:
+
+Your paper mentions multiple edge hosts learning concurrently - A3C's asynchronous nature aligns well
+Policy gradient methods can handle complex action spaces (your resource allocation strategies)
+More stable convergence in federated settings
+
+Dueling DQN could improve upon vanilla DQN because:
+
+In resource allocation, the value of being in a particular state (having certain resources available) might be more important than the specific action taken
+Better generalization across similar states
+
