@@ -1,0 +1,19 @@
+Based on your paper on Concurrent Federated Reinforcement Learning (CFRL) for resource allocation in IoT edge computing, you're asking whether there are alternatives to DQN (Deep Q-Network) that could be used as the underlying reinforcement learning framework.
+Yes, there are several viable alternatives to DQN that could potentially improve your system:
+Model-Free RL Alternatives
+1. Policy Gradient Methods:
+
+A3C (Asynchronous Advantage Actor-Critic) or A2C: These could naturally fit your federated architecture since multiple edge hosts already learn asynchronously
+PPO (Proximal Policy Optimization): More stable training than vanilla policy gradients, handles continuous action spaces better
+DDPG (Deep Deterministic Policy Gradient): Useful if you want continuous resource allocation rather than discrete
+
+2. Advanced Q-Learning Variants:
+
+Double DQN: Reduces overestimation bias in Q-values
+Dueling DQN: Separates state value and action advantage, potentially better for your scenario where many actions might have similar values
+Rainbow DQN: Combines multiple DQN improvements (could be overkill but worth considering)
+
+3. Soft Actor-Critic (SAC):
+
+Entropy-regularized, more robust exploration
+Handles continuous actions naturally
