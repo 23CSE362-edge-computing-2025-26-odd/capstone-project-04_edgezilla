@@ -39,9 +39,10 @@ EDGE_METRICS = {
         "filename": "resource_comparison.png",
         "formatter": lambda v: f"{v:.1f}%"
     },
-    "offload_ratio_pct": {
-        "label": "Task Offloading Ratio (%)",
-        "filename": "offload_comparison.png",
+    "medical_accuracy_pct": {
+        "label": "Medical Accuracy (%)",
+        "title": "medical accuracy (offloading)",
+        "filename": "medical_accuracy_offloading.png",
         "formatter": lambda v: f"{v:.1f}%"
     },
 }
@@ -93,6 +94,8 @@ def summarize_run(data_dir, decisions_path, duration, workload_meta):
     perf_df['energy_joules'] = perf_df.apply(estimate_energy, axis=1)
 
     decisions_df = pd.read_csv(decisions_path) if decisions_path.exists() else pd.DataFrame()
+    dqn_decisions_path = data_dir / 'dqn_decisions.csv'
+    dqn_decisions_df = pd.read_csv(dqn_decisions_path) if dqn_decisions_path.exists() else pd.DataFrame()
 
     latency_col = 'total_latency_ms' if 'total_latency_ms' in perf_df.columns else 'latency_ms'
     avg_latency = perf_df[latency_col].mean()
@@ -104,7 +107,13 @@ def summarize_run(data_dir, decisions_path, duration, workload_meta):
     if not decisions_df.empty and 'cpu_util' in decisions_df.columns:
         resource_util = decisions_df['cpu_util'].mean() * 100.0
 
-    offload_ratio = (perf_df['location'].str.lower() == 'cloud').mean() * 100.0
+    medical_accuracy = np.nan
+    if not dqn_decisions_df.empty and 'correct' in dqn_decisions_df.columns:
+        correct_series = dqn_decisions_df['correct']
+        if correct_series.dtype == bool:
+            medical_accuracy = correct_series.mean() * 100.0
+        else:
+            medical_accuracy = correct_series.astype(str).str.lower().isin(['true', '1', 'yes']).mean() * 100.0
 
     return {
         'workload': workload_meta['name'],
@@ -115,7 +124,7 @@ def summarize_run(data_dir, decisions_path, duration, workload_meta):
         'throughput': throughput,
         'energy_per_task': energy_per_task,
         'resource_util_pct': resource_util,
-        'offload_ratio_pct': offload_ratio,
+        'medical_accuracy_pct': medical_accuracy,
         'tasks_processed': total_tasks,
     }
 
@@ -140,7 +149,8 @@ def plot_metric(summary_df, metric_key, output_dir):
     ax.set_xticklabels(labels)
     ax.set_xlabel('Workload (patients / wards)', fontweight='bold')
     ax.set_ylabel(settings['label'], fontweight='bold')
-    ax.set_title(f"{settings['label']} Across Workloads", fontweight='bold')
+    plot_title = settings.get('title') or f"{settings['label']} Across Workloads"
+    ax.set_title(plot_title, fontweight='bold')
     ax.grid(True, axis='y', alpha=0.3)
 
     output_path = output_dir / settings['filename']

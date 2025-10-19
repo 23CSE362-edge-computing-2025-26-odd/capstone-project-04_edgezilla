@@ -2,44 +2,44 @@
 
 ## Latency Metrics ##
 - Overall Latency:
-    - Average: 270.44 ms
+    - Average: 270.38 ms
     - Median:  349.32 ms
-    - 95th Percentile: 399.69 ms
+    - 95th Percentile: 399.68 ms
 
 - Edge Latency:
-    - Average: 162.41 ms
+    - Average: 162.42 ms
     - Median:  160.79 ms
-    - 95th Percentile: 177.61 ms
-    - Task Count: 255
+    - 95th Percentile: 177.60 ms
+    - Task Count: 257
 
 - Cloud Latency:
-    - Average: 378.04 ms
-    - Median:  379.67 ms
-    - 95th Percentile: 402.71 ms
-    - Task Count: 256
+    - Average: 377.91 ms
+    - Median:  379.51 ms
+    - 95th Percentile: 402.70 ms
+    - Task Count: 258
 
 ## Throughput Metrics ##
-- Total Tasks Processed: 511
-- Overall Throughput: 8.52 tasks/sec
+- Total Tasks Processed: 515
+- Overall Throughput: 8.58 tasks/sec
 
 ## ML Inference Metrics ##
 - ML Inference Latency:
-    - Average: 46.57 ms
-    - Median:  24.10 ms
-    - 95th Percentile: 99.15 ms
-    - 99th Percentile: 163.32 ms
-    - Min: 6.05 ms
-    - Max: 202.85 ms
-    - Std Dev: 39.57 ms
-- Total ML Inferences: 511
+    - Average: 48.25 ms
+    - Median:  20.80 ms
+    - 95th Percentile: 104.71 ms
+    - 99th Percentile: 165.81 ms
+    - Min: 4.57 ms
+    - Max: 201.01 ms
+    - Std Dev: 42.06 ms
+- Total ML Inferences: 515
 
 ## Resource Utilization ##
-- Average CPU Utilization: 59.0%
-- Edge Processing: 255 tasks (49.9%)
-- Cloud Processing: 256 tasks (50.1%)
+- Average CPU Utilization: 54.8%
+- Edge Processing: 257 tasks (49.9%)
+- Cloud Processing: 258 tasks (50.1%)
 
 ## DQN Learning Metrics ##
-- Average Reward: 4.4845
-- Final Epsilon: 0.0776
-- Average Loss: 0.0783
+- Average Reward: 4.4846
+- Final Epsilon: 0.0760
+- Average Loss: 0.0782
 
