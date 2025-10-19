@@ -7,7 +7,7 @@ from datetime import datetime
 class EnhancedMetricsExporter:
     """Enhanced metrics exporter that generates detailed CSV files and summary reports."""
     
-    def __init__(self, metrics, strategy_name):
+    def __init__(self, metrics, strategy_name, output_dir=None):
         """
         Initialize the exporter with metrics data and strategy name.
         
@@ -17,7 +17,9 @@ class EnhancedMetricsExporter:
         """
         self.metrics = metrics
         self.strategy_name = strategy_name
-        self.output_dir = os.path.join('results/data', strategy_name)
+        default_dir = os.path.join('results/data', strategy_name)
+        target_dir = output_dir if output_dir is not None else default_dir
+        self.output_dir = os.fspath(target_dir)
         os.makedirs(self.output_dir, exist_ok=True)
         
     def export_summary_report(self):

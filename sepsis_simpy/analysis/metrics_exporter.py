@@ -6,10 +6,12 @@ import config
 
 class MetricsExporter:
     """Exports final, aggregated performance metrics to files."""
-    def __init__(self, converted_metrics, strategy_name):
+    def __init__(self, converted_metrics, strategy_name, output_dir=None):
         self.converted_metrics = converted_metrics
         self.strategy_name = strategy_name
-        self.output_dir = os.path.join(config.DATA_OUTPUT_DIR, strategy_name)
+        default_dir = os.path.join(config.DATA_OUTPUT_DIR, strategy_name)
+        target_dir = output_dir if output_dir is not None else default_dir
+        self.output_dir = os.fspath(target_dir)
         os.makedirs(self.output_dir, exist_ok=True)
 
     def export_to_json(self):

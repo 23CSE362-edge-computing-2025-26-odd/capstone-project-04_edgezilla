@@ -1,7 +1,7 @@
 # ===================================================================
 # --- Simulation Basics ---
 # ===================================================================
-SIMULATION_DURATION = 60  # seconds
+SIMULATION_DURATION = 60 # seconds
 NUM_WARDS = 3
 WEARABLES_PER_WARD = 5
 TOTAL_WEARABLES = NUM_WARDS * WEARABLES_PER_WARD

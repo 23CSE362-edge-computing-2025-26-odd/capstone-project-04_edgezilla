@@ -7,7 +7,7 @@ from datetime import datetime
 class EnhancedVisualizer:
     """Creates enhanced charts for simulation analysis."""
     
-    def __init__(self, metrics, strategy_name):
+    def __init__(self, metrics, strategy_name, output_dir=None):
         """
         Initialize the visualizer with metrics data and strategy name.
         
@@ -17,7 +17,9 @@ class EnhancedVisualizer:
         """
         self.metrics = metrics
         self.strategy_name = strategy_name
-        self.output_dir = os.path.join('results/charts', strategy_name)
+        default_dir = os.path.join('results/charts', strategy_name)
+        target_dir = output_dir if output_dir is not None else default_dir
+        self.output_dir = os.fspath(target_dir)
         os.makedirs(self.output_dir, exist_ok=True)
         
         # Set style for all plots
